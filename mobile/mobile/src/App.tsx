@@ -201,7 +201,7 @@ function stateToPath(navItem: string, subPage: SubPage, accountType: AccountType
 // ── App ─────────────────────────────────────────────────────────────────────
 
 function AppInner() {
-  const { consumerName, businessName, consumerHomeCurrency, businessHomeCurrency } = usePrototypeNames();
+  const { consumerName, businessName, consumerHomeCurrency, businessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted } = usePrototypeNames();
   const { t } = useLanguage();
 
   // Initialise state from the current URL
@@ -214,9 +214,6 @@ function AppInner() {
   const [transitionDirection, setTransitionDirection] = useState<'push' | 'pop' | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [switching, setSwitching] = useState(false);
-  const [pendingJointInviteName, setPendingJointInviteName] = useState<string | null>(null);
-  const [hasIncomingInvite, setHasIncomingInvite] = useState(false);
-  const [jointAccountAccepted, setJointAccountAccepted] = useState(false);
 
   // Sync URL when state changes (skip when handling popstate)
   const isPopstateRef = useRef(false);

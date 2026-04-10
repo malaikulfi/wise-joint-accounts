@@ -178,17 +178,18 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, onClose,
               tabIndex={0}
               onClick={() => { setCardType('digital'); onAccept?.('digital'); }}
             >
-              <div className="card-choose__option-content">
-                <div className="np-text-body-large-bold card-choose__option-name">Digital</div>
+              <div className="card-choose__option-top">
+                <div className="card-choose__option-name">DIGITAL</div>
                 <div className="np-text-body-default card-choose__option-desc">
                   A card that lives online and works anywhere. Easy, secure, and always on hand.
                 </div>
-                <div className="card-choose__option-meta">
-                  <span className="card-choose__badge card-choose__badge--free">Free</span>
-                  <span className="np-text-body-default card-choose__option-delivery">Get it instantly</span>
-                </div>
+                <span className="card-choose__badge card-choose__badge--free">Free</span>
               </div>
-              <img src={cardGreenUrl} alt="" className="card-choose__option-img" />
+              <img src={cardTapestryUrl} alt="" className="card-choose__option-img" />
+              <div className="card-choose__option-footer">
+                <span className="np-text-body-default-bold">Get it instantly</span>
+                <span className="card-choose__option-arrow">→</span>
+              </div>
             </div>
 
             <div
@@ -197,17 +198,18 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, onClose,
               tabIndex={0}
               onClick={() => { setCardType('physical'); handleScreenChange('address'); }}
             >
-              <div className="card-choose__option-content">
-                <div className="np-text-body-large-bold card-choose__option-name">Physical</div>
+              <div className="card-choose__option-top">
+                <div className="card-choose__option-name">PHYSICAL</div>
                 <div className="np-text-body-default card-choose__option-desc">
                   Spend and withdraw money around the world. In your wallet and on your side.
                 </div>
-                <div className="card-choose__option-meta">
-                  <span className="np-text-body-default card-choose__option-price">From 2.50 GBP</span>
-                  <span className="np-text-body-default card-choose__option-delivery">Arrives within 6 days</span>
-                </div>
+                <span className="card-choose__badge card-choose__badge--price">From 2.50 GBP</span>
               </div>
-              <img src={cardTapestryUrl} alt="" className="card-choose__option-img" />
+              <img src={cardGreenUrl} alt="" className="card-choose__option-img" />
+              <div className="card-choose__option-footer">
+                <span className="np-text-body-default-bold">Arrives within 6 days</span>
+                <span className="card-choose__option-arrow">→</span>
+              </div>
             </div>
           </div>
         </div>

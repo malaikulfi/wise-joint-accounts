@@ -46,9 +46,11 @@ export function JointAccountPitch({ onClose, onGetStarted }: { onClose: () => vo
           <p className="np-text-body-large joint-pitch__hero-subtitle">
             An account for two, for one big wide world. Open in minutes.
           </p>
-          <div className="joint-pitch__members-badge">
-            <People size={16} />
-            <span className="np-text-body-default-bold">2 members</span>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <div className="joint-pitch__members-badge">
+              <People size={16} />
+              <span className="np-text-body-default-bold">2 members</span>
+            </div>
           </div>
         </div>
 

@@ -91,6 +91,16 @@ const de: Translations = {
   'settings.changeAmounts': 'Beträge ändern',
   'settings.changeAmountsSub': 'Claude anweisen, die Währungen und Salden in deinen Konten zu ändern.',
   'settings.homeCurrency': 'Heimatwährung',
+  'settings.jointAccount': 'Gemeinschaftskonto',
+  'settings.jointScenario1a': 'Szenario 1a — Initiieren',
+  'settings.jointScenario1aSub': 'Keine Einladung gesendet. Nutzer entdeckt und eröffnet ein Gemeinschaftskonto.',
+  'settings.jointScenario1b': 'Szenario 1b — Einladung erhalten',
+  'settings.jointScenario1bSub': 'Sky Dog hat eine Einladung gesendet. Nutzer akzeptiert.',
+  'settings.jointScenarioPending': 'Szenario — Einladung ausstehend',
+  'settings.jointScenarioPendingSub': 'Einladung an Sky Dog gesendet, wartet auf Annahme.',
+  'settings.jointScenarioAccepted': 'Szenario — Konto aktiv',
+  'settings.jointScenarioAcceptedSub': 'Gemeinschaftskonto bereits eingerichtet. Beide Karten ausgestellt.',
+  'settings.jointReset': 'Gemeinschaftskonto-Status zurücksetzen',
 
   // Total Balance Header
   'balance.totalBalance': 'Gesamtguthaben',

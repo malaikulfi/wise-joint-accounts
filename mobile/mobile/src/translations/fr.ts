@@ -91,6 +91,16 @@ const fr: Translations = {
   'settings.changeAmounts': 'Modifier les montants',
   'settings.changeAmountsSub': 'Demander à Claude de modifier les devises et soldes de vos comptes.',
   'settings.homeCurrency': 'Devise principale',
+  'settings.jointAccount': 'Compte joint',
+  'settings.jointScenario1a': 'Scénario 1a — Initier',
+  'settings.jointScenario1aSub': 'Aucune invitation envoyée. L\'utilisateur découvre et ouvre un compte joint.',
+  'settings.jointScenario1b': 'Scénario 1b — Recevoir une invitation',
+  'settings.jointScenario1bSub': 'Sky Dog a envoyé une invitation. L\'utilisateur accepte.',
+  'settings.jointScenarioPending': 'Scénario — Invitation en attente',
+  'settings.jointScenarioPendingSub': 'Invitation envoyée à Sky Dog, en attente d\'acceptation.',
+  'settings.jointScenarioAccepted': 'Scénario — Compte actif',
+  'settings.jointScenarioAcceptedSub': 'Compte joint déjà configuré. Les deux cartes émises.',
+  'settings.jointReset': 'Réinitialiser l\'état du compte joint',
 
   // Total Balance Header
   'balance.totalBalance': 'Solde total',

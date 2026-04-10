@@ -6243,13 +6243,15 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
   flex-direction: column;
   background: var(--color-background-screen);
   z-index: 100;
+  overflow: hidden;
 }
 
 .joint-accept__scroll {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: var(--content-pad-top) var(--content-pad-x) var(--content-pad-bottom);
+  padding: 112px 16px 32px;
 }
 
 .joint-accept__footer {
@@ -6493,21 +6495,20 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
 .card-choose__body {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
+  padding-top: 16px;
 }
 
 .card-choose__title {
-  margin: 0 0 4px;
+  margin: 0 0 8px;
 }
 
 .card-choose__option {
   background: var(--color-background-neutral);
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 20px;
+  overflow: hidden;
   display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  position: relative;
+  flex-direction: column;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform 140ms cubic-bezier(0.32, 0.72, 0, 1);
@@ -6517,14 +6518,19 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
   transform: scale(0.98);
 }
 
-.card-choose__option-content {
-  flex: 1;
+.card-choose__option-top {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding: 20px 20px 16px;
 }
 
 .card-choose__option-name {
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--color-content-primary);
   margin: 0;
 }
 
@@ -6533,42 +6539,49 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
   color: var(--color-content-secondary);
 }
 
-.card-choose__option-meta {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-top: 4px;
-}
-
 .card-choose__badge {
   display: inline-flex;
+  align-self: flex-start;
   align-items: center;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--color-border-neutral);
+  color: var(--color-content-primary);
+  background: transparent;
 }
 
 .card-choose__badge--free {
-  background: #9fe870;
-  color: #163300;
+  border-color: var(--color-border-neutral);
+  color: var(--color-content-primary);
 }
 
-.card-choose__option-price,
-.card-choose__option-delivery {
-  color: var(--color-content-secondary);
-  font-size: 14px;
+.card-choose__badge--price {
+  border-color: var(--color-border-neutral);
+  color: var(--color-content-primary);
 }
 
 .card-choose__option-img {
-  width: 80px;
-  height: 50px;
-  border-radius: 8px;
+  width: 100%;
+  aspect-ratio: 16 / 10;
   object-fit: cover;
-  flex-shrink: 0;
+  display: block;
+  margin: 4px 0 0;
+}
+
+.card-choose__option-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-top: 1px solid var(--color-border-neutral);
+  margin-top: 0;
+}
+
+.card-choose__option-arrow {
+  font-size: 18px;
+  color: var(--color-content-primary);
 }
 
 /* Address form */
@@ -6741,14 +6754,14 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
 .joint-pitch__hero {
   background: #163300;
   position: relative;
-  padding: 140px 24px 20px;
+  padding: 100px 24px 0;
   overflow: hidden;
 }
 
 
 .joint-pitch__close {
   position: absolute;
-  top: 84px;
+  top: 48px;
   left: 16px;
   z-index: 2;
 }
@@ -6756,20 +6769,24 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
 .joint-pitch__hero-copy {
   position: relative;
   z-index: 2;
+  text-align: center;
 }
 
 .joint-pitch__hero-title {
   color: #9fe870;
   text-transform: uppercase;
   margin: 0 0 16px;
-  font-size: clamp(34px, 8vw, 48px);
-  line-height: 1;
-  letter-spacing: 0.01em;
+  font-size: clamp(44px, 12vw, 64px);
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  font-weight: 900;
+  text-align: center;
 }
 
 .joint-pitch__hero-subtitle {
   color: rgba(255,255,255,0.85);
   margin: 0 0 20px;
+  text-align: center;
 }
 
 .joint-pitch__members-badge {
@@ -6780,37 +6797,40 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
   color: rgba(255,255,255,0.9);
   border-radius: 20px;
   padding: 6px 14px;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .joint-pitch__hero-cards {
   position: relative;
-  height: 160px;
+  height: 220px;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
 }
 
 .joint-pitch__card {
   position: absolute;
-  width: 260px;
+  width: 68%;
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
 }
 
+/* tapestry card: front-left, rotated slightly left */
 .joint-pitch__card--back {
   left: 50%;
-  margin-left: 10px;
-  top: 20px;
-  transform: rotate(8deg);
-  z-index: 1;
+  margin-left: -46%;
+  top: 16px;
+  transform: rotate(-6deg);
+  z-index: 2;
 }
 
+/* green card: behind-right, rotated slightly right */
 .joint-pitch__card--front {
   left: 50%;
-  margin-left: -160px;
-  top: 10px;
-  transform: rotate(-5deg);
-  z-index: 2;
+  margin-left: -22%;
+  top: 30px;
+  transform: rotate(5deg);
+  z-index: 1;
 }
 
 /* Feature cards */
@@ -6818,12 +6838,12 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 12px 16px 120px;
+  padding: 12px 16px 140px;
 }
 
 .joint-pitch__feature {
   border-radius: 20px;
-  padding: 28px 24px 24px;
+  padding: 32px 24px 28px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -6838,17 +6858,20 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
   color: #9fe870;
   text-transform: uppercase;
   margin: 0 0 12px;
-  font-size: clamp(26px, 6vw, 36px);
-  line-height: 1.05;
-  letter-spacing: 0.01em;
+  font-size: clamp(32px, 8vw, 44px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-weight: 900;
+  text-align: center;
 }
 
 .joint-pitch__feature-title--cyan { color: #7ee8e8; }
 .joint-pitch__feature--red .joint-pitch__feature-title { color: #ff9eb5; }
 
 .joint-pitch__feature-body {
-  color: rgba(255,255,255,0.75);
+  color: rgba(255,255,255,0.9);
   margin: 0 0 24px;
+  text-align: center;
 }
 
 /* Transaction pill mock */
@@ -6976,14 +6999,14 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
 /* Joint pitch close button - match FlowHeader positioning exactly */
 .joint-pitch__close {
   position: absolute;
-  top: 84px;
+  top: 48px;
   left: 16px;
   z-index: 100;
 }
 
 /* Reduce bottom padding on features */
 .joint-pitch__features {
-  padding: 12px 16px 80px !important;
+  padding: 12px 16px 140px !important;
 }
 
 /* Make receipt icon and text always dark */

@@ -282,6 +282,7 @@ const PROMPT_PROJECT_CONTEXT = `You are working on a high-fidelity interactive p
 import { useTheme } from '@wise/components-theming';
 import { usePrototypeNames } from '../context/PrototypeNames';
 import { useLanguage, type Language } from '../context/Language';
+import { People } from '@transferwise/icons';
 import { currencyMeta } from '@shared/data/currency-rates';
 import { Flag } from '@wise/art';
 import { useLiquidGlass } from '../hooks/useLiquidGlass';
@@ -289,7 +290,7 @@ import { useLiquidGlass } from '../hooks/useLiquidGlass';
 export function PrototypeSettings() {
   const { isScreenModeDark, setScreenMode } = useTheme();
   const createSnackbar = useSnackbar();
-  const { consumerName, setConsumerName, businessName, setBusinessName, consumerHomeCurrency, setConsumerHomeCurrency, businessHomeCurrency, setBusinessHomeCurrency } = usePrototypeNames();
+  const { consumerName, setConsumerName, businessName, setBusinessName, consumerHomeCurrency, setConsumerHomeCurrency, businessHomeCurrency, setBusinessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted } = usePrototypeNames();
   const { language, setLanguage, t } = useLanguage();
 
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -627,6 +628,79 @@ export function PrototypeSettings() {
                     ))}
                   </div>
                 </BottomSheet>
+              </div>
+            </div>
+
+            <hr style={{ border: 'none', borderTop: '1px solid var(--color-border-neutral)', margin: '24px 0' }} />
+
+            {/* Joint account scenarios */}
+            <div className="fs-sheet__section">
+              <h3 className="np-text-title-body" style={{ margin: '0 0 4px' }}>{t('settings.jointAccount')}</h3>
+              <p className="np-text-body-default" style={{ margin: '0 0 16px', color: 'var(--color-content-secondary)' }}>
+                {hasIncomingInvite
+                  ? 'Active: incoming invite from Sky Dog'
+                  : pendingJointInviteName
+                  ? `Active: invite pending (${pendingJointInviteName})`
+                  : jointAccountAccepted
+                  ? 'Active: joint account set up'
+                  : 'No scenario active'}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <ListItem
+                  media={<ListItem.AvatarView size={40} style={{ background: '#163300', border: 'none', color: '#9fe870' }}><People size={24} /></ListItem.AvatarView>}
+                  title={<span className="np-text-body-default" style={{ fontWeight: 600 }}>{t('settings.jointScenario1a')}</span>}
+                  subtitle={t('settings.jointScenario1aSub')}
+                  control={
+                    <Button v2 priority="secondary-neutral" size="sm" onClick={() => {
+                      setHasIncomingInvite(false);
+                      setPendingJointInviteName(null);
+                      setJointAccountAccepted(false);
+                    }}>Set</Button>
+                  }
+                />
+                <ListItem
+                  media={<ListItem.AvatarView size={40} style={{ background: '#163300', border: 'none', color: '#9fe870' }}><People size={24} /></ListItem.AvatarView>}
+                  title={<span className="np-text-body-default" style={{ fontWeight: 600 }}>{t('settings.jointScenario1b')}</span>}
+                  subtitle={t('settings.jointScenario1bSub')}
+                  control={
+                    <Button v2 priority="secondary-neutral" size="sm" onClick={() => {
+                      setHasIncomingInvite(true);
+                      setPendingJointInviteName(null);
+                      setJointAccountAccepted(false);
+                    }}>Set</Button>
+                  }
+                />
+                <ListItem
+                  media={<ListItem.AvatarView size={40} style={{ background: '#163300', border: 'none', color: '#9fe870' }}><People size={24} /></ListItem.AvatarView>}
+                  title={<span className="np-text-body-default" style={{ fontWeight: 600 }}>{t('settings.jointScenarioPending')}</span>}
+                  subtitle={t('settings.jointScenarioPendingSub')}
+                  control={
+                    <Button v2 priority="secondary-neutral" size="sm" onClick={() => {
+                      setHasIncomingInvite(false);
+                      setPendingJointInviteName('Sky Dog');
+                      setJointAccountAccepted(false);
+                    }}>Set</Button>
+                  }
+                />
+                <ListItem
+                  media={<ListItem.AvatarView size={40} style={{ background: '#163300', border: 'none', color: '#9fe870' }}><People size={24} /></ListItem.AvatarView>}
+                  title={<span className="np-text-body-default" style={{ fontWeight: 600 }}>{t('settings.jointScenarioAccepted')}</span>}
+                  subtitle={t('settings.jointScenarioAcceptedSub')}
+                  control={
+                    <Button v2 priority="secondary-neutral" size="sm" onClick={() => {
+                      setHasIncomingInvite(false);
+                      setPendingJointInviteName(null);
+                      setJointAccountAccepted(true);
+                    }}>Set</Button>
+                  }
+                />
+              </div>
+              <div style={{ marginTop: 12 }}>
+                <Button v2 size="sm" priority="secondary" sentiment="negative" block onClick={() => {
+                  setHasIncomingInvite(false);
+                  setPendingJointInviteName(null);
+                  setJointAccountAccepted(false);
+                }}>{t('settings.jointReset')}</Button>
               </div>
             </div>
 

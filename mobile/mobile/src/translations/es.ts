@@ -91,6 +91,16 @@ const es: Translations = {
   'settings.changeAmounts': 'Cambiar importes',
   'settings.changeAmountsSub': 'Decirle a Claude que cambie las divisas y saldos en tus cuentas.',
   'settings.homeCurrency': 'Moneda principal',
+  'settings.jointAccount': 'Cuenta conjunta',
+  'settings.jointScenario1a': 'Escenario 1a — Iniciar',
+  'settings.jointScenario1aSub': 'Sin invitación enviada. El usuario descubre y abre una cuenta conjunta.',
+  'settings.jointScenario1b': 'Escenario 1b — Recibir invitación',
+  'settings.jointScenario1bSub': 'Sky Dog ha enviado una invitación. El usuario acepta.',
+  'settings.jointScenarioPending': 'Escenario — Invitación pendiente',
+  'settings.jointScenarioPendingSub': 'Invitación enviada a Sky Dog, esperando aceptación.',
+  'settings.jointScenarioAccepted': 'Escenario — Cuenta activa',
+  'settings.jointScenarioAcceptedSub': 'Cuenta conjunta ya configurada. Ambas tarjetas emitidas.',
+  'settings.jointReset': 'Restablecer estado de cuenta conjunta',
 
   // Total Balance Header
   'balance.totalBalance': 'Saldo total',

@@ -96,15 +96,7 @@ export function JointAccountInviteFlow({ onClose, onDone, onInviteSent, onStepCh
   };
 
   const handleShareLink = () => {
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      navigator.share({
-        title: 'Open a joint account with me on Wise',
-        text: 'Set up a joint account with me on Wise.',
-        url: `https://${INVITE_URL}`,
-      }).catch(() => {});
-    } else {
-      setSheet({ type: 'share-link' });
-    }
+    setSheet({ type: 'share-link' });
   };
 
   const handleConfirmInvite = () => {
@@ -257,10 +249,10 @@ export function JointAccountInviteFlow({ onClose, onDone, onInviteSent, onStepCh
         </div>
       </div>
 
-      {/* Share link fallback bottom sheet */}
+      {/* Share link bottom sheet */}
       <BottomSheet open={sheet?.type === 'share-link'} onClose={() => setSheet(null)} title="Share a link">
-        <div className="joint-invite-sheet__content">
-          <p className="np-text-body-large" style={{ margin: '0 0 16px', color: 'var(--color-content-secondary)' }}>
+        <div className="joint-invite-sheet__content joint-invite-sheet__content--qr">
+          <p className="np-text-body-large joint-invite-sheet__qr-label">
             Send this link to invite someone to open a joint account with you on Wise.
           </p>
           <div className="joint-invite-sheet__link-row">
@@ -269,6 +261,9 @@ export function JointAccountInviteFlow({ onClose, onDone, onInviteSent, onStepCh
               Copy
             </Button>
           </div>
+          <Button v2 size="lg" priority="primary" block onClick={() => setSheet(null)} style={{ marginTop: 8 }}>
+            Done
+          </Button>
         </div>
       </BottomSheet>
 

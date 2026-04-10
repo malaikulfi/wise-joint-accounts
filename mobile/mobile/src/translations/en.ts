@@ -89,6 +89,16 @@ const en = {
   'settings.changeAmounts': 'Change amounts',
   'settings.changeAmountsSub': 'Tell Claude to change the currencies and balances in your accounts.',
   'settings.homeCurrency': 'Home currency',
+  'settings.jointAccount': 'Joint account',
+  'settings.jointScenario1a': 'Scenario 1a — Initiate',
+  'settings.jointScenario1aSub': 'No invite sent. User discovers and opens a joint account.',
+  'settings.jointScenario1b': 'Scenario 1b — Receive invite',
+  'settings.jointScenario1bSub': 'Sky Dog has sent an invite. User accepts.',
+  'settings.jointScenarioPending': 'Scenario — Invite pending',
+  'settings.jointScenarioPendingSub': 'Invite sent to Sky Dog, waiting for acceptance.',
+  'settings.jointScenarioAccepted': 'Scenario — Account active',
+  'settings.jointScenarioAcceptedSub': 'Joint account already set up. Both cards issued.',
+  'settings.jointReset': 'Reset all joint account state',
 
   // Total Balance Header
   'balance.totalBalance': 'Total balance',
