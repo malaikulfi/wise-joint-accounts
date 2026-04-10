@@ -51,7 +51,7 @@ type SubPage =
   | { type: 'get-more' }
   | null;
 
-type JointAcceptScreen = 'pitch' | 'card-type' | 'address' | 'review' | 'success';
+type JointAcceptScreen = 'pitch' | 'card-type' | 'address' | 'delivery' | 'name-on-card' | 'pin' | 'pin-confirm' | 'review' | 'confirm' | 'success';
 
 function getInitials(name: string): string {
   return name.split(/\s+/).map((w) => w[0] || '').join('').toUpperCase();

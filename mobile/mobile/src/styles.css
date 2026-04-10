@@ -6251,7 +6251,7 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 112px 16px 32px;
+  padding: 140px 16px 32px;
 }
 
 .joint-accept__footer {
@@ -6565,7 +6565,7 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
 .card-choose__option-img {
   width: 100%;
   aspect-ratio: 16 / 10;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
   margin: 4px 0 0;
 }
@@ -6616,11 +6616,11 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
 .card-address__input {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid var(--color-border-default);
-  border-radius: 8px;
+  border: 1.5px solid var(--color-border-neutral);
+  border-radius: 10px;
   font-size: 16px;
   font-family: inherit;
-  background: var(--color-background-screen);
+  background: transparent;
   color: var(--color-content-primary);
   box-sizing: border-box;
 }
@@ -6713,6 +6713,412 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
 .card-success__subtitle {
   margin: 0;
   color: var(--color-content-secondary);
+}
+
+/* ── Radio row (delivery method / name on card) ─────────────── */
+.card-radio__list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.card-radio-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0;
+  border: none;
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  gap: 16px;
+  width: 100%;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card-radio-row__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.card-radio-row__label {
+  color: var(--color-content-primary);
+}
+
+.card-radio-row__subtitle {
+  color: var(--color-content-secondary);
+}
+
+.card-radio-row__dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border-neutral);
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+
+.card-radio-row__dot--checked {
+  border: 6px solid var(--color-interactive-primary);
+}
+
+/* ── Address optional label ─────────────────────────────────── */
+.card-address__optional {
+  color: var(--color-content-secondary);
+  font-weight: 400;
+}
+
+/* ── Review order v2 ────────────────────────────────────────── */
+.card-review2__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.card-review2__title {
+  margin: 0 0 24px;
+}
+
+.card-review2__card-thumb {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--color-background-neutral);
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.card-review2__card-thumb-img {
+  width: 56px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.card-review2__card-thumb-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.card-review2__card-thumb-sub {
+  color: var(--color-content-secondary);
+}
+
+.card-review2__section {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--color-border-subtle);
+  padding: 16px 0;
+  gap: 0;
+}
+
+.card-review2__section-label {
+  color: var(--color-content-secondary);
+  margin-bottom: 12px;
+}
+
+.card-review2__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.card-review2__row:last-child {
+  border-bottom: none;
+}
+
+.card-review2__row-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-background-neutral);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-content-secondary);
+}
+
+.card-review2__row-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.card-review2__row-label {
+  color: var(--color-content-secondary);
+}
+
+.card-review2__edit,
+.card-review2__show {
+  background: var(--color-background-neutral);
+  border: 1px solid var(--color-border-neutral);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: var(--color-content-primary);
+  margin-top: 4px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── PIN entry screen ───────────────────────────────────────── */
+.joint-accept--pin {
+  display: flex;
+  flex-direction: column;
+}
+
+.joint-accept__scroll--pin {
+  flex: 1;
+  padding: 140px 24px 24px;
+}
+
+.card-pin__title {
+  margin: 0 0 8px;
+}
+
+.card-pin__subtitle {
+  margin: 0 0 40px;
+  color: var(--color-content-secondary);
+}
+
+.card-pin__dots {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.card-pin__dot {
+  flex: 1;
+  aspect-ratio: 1.4;
+  border: 1.5px solid var(--color-border-neutral);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-pin__dot--filled::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-content-primary);
+}
+
+.card-pin__numpad-area {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background-neutral);
+}
+
+.card-pin__continue-btn {
+  width: 100%;
+  padding: 18px;
+  border: none;
+  background: var(--color-interactive-primary);
+  color: var(--color-content-on-interactive-primary);
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card-pin__continue-btn--active {
+  opacity: 1;
+}
+
+.card-numpad {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background-neutral);
+}
+
+.card-numpad__row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.card-numpad__key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 0;
+  border: 0.5px solid var(--color-border-subtle);
+  background: var(--color-background-screen);
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 56px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card-numpad__key:active {
+  background: var(--color-background-neutral);
+}
+
+.card-numpad__key--empty {
+  background: var(--color-background-neutral);
+  border: 0.5px solid var(--color-border-subtle);
+}
+
+.card-numpad__key--del {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-background-neutral);
+  border: 0.5px solid var(--color-border-subtle);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card-numpad__digit {
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--color-content-primary);
+}
+
+.card-numpad__sub {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--color-content-secondary);
+  margin-top: 2px;
+}
+
+/* ── Confirm order screen ───────────────────────────────────── */
+.card-confirm__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.card-confirm__title {
+  margin: 0 0 24px;
+}
+
+.card-confirm__section {
+  border-top: 1px solid var(--color-border-subtle);
+  padding: 20px 0;
+}
+
+.card-confirm__section-label {
+  color: var(--color-content-secondary);
+  display: block;
+  margin-bottom: 12px;
+}
+
+.card-confirm__section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.card-confirm__change {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--color-interactive-primary);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card-confirm__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-confirm__item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-background-neutral);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-content-secondary);
+}
+
+.card-confirm__item-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.card-confirm__item-sub {
+  color: var(--color-content-secondary);
+}
+
+.card-confirm__payment {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-confirm__applepay-badge {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.card-confirm__breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.card-confirm__breakdown-row:last-child {
+  border-bottom: none;
+}
+
+.card-confirm__breakdown-row--total .np-text-body-default {
+  color: var(--color-content-primary);
+}
+
+.card-confirm__applepay-btn {
+  width: 100%;
+  padding: 18px;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card-confirm__applepay-btn:active {
+  opacity: 0.85;
 }
 
 /* White glass button for GetMore */
