@@ -16,6 +16,8 @@ interface PrototypeNamesContextValue {
   setPendingJointInviteName: (name: string | null) => void;
   jointAccountAccepted: boolean;
   setJointAccountAccepted: (val: boolean) => void;
+  jointCardType: 'digital' | 'physical' | null;
+  setJointCardType: (val: 'digital' | 'physical' | null) => void;
 }
 
 const PrototypeNamesContext = createContext<PrototypeNamesContextValue>({
@@ -33,6 +35,8 @@ const PrototypeNamesContext = createContext<PrototypeNamesContextValue>({
   setPendingJointInviteName: () => {},
   jointAccountAccepted: false,
   setJointAccountAccepted: () => {},
+  jointCardType: null,
+  setJointCardType: () => {},
 });
 
 export function PrototypeNamesProvider({ children }: { children: ReactNode }) {
@@ -43,6 +47,7 @@ export function PrototypeNamesProvider({ children }: { children: ReactNode }) {
   const [hasIncomingInvite, setHasIncomingInvite] = useState(false);
   const [pendingJointInviteName, setPendingJointInviteName] = useState<string | null>(null);
   const [jointAccountAccepted, setJointAccountAccepted] = useState(false);
+  const [jointCardType, setJointCardType] = useState<'digital' | 'physical' | null>(null);
 
   return (
     <PrototypeNamesContext.Provider value={{
@@ -53,6 +58,7 @@ export function PrototypeNamesProvider({ children }: { children: ReactNode }) {
       hasIncomingInvite, setHasIncomingInvite,
       pendingJointInviteName, setPendingJointInviteName,
       jointAccountAccepted, setJointAccountAccepted,
+      jointCardType, setJointCardType,
     }}>
       {children}
     </PrototypeNamesContext.Provider>

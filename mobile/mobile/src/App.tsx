@@ -201,7 +201,7 @@ function stateToPath(navItem: string, subPage: SubPage, accountType: AccountType
 // ── App ─────────────────────────────────────────────────────────────────────
 
 function AppInner() {
-  const { consumerName, businessName, consumerHomeCurrency, businessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted } = usePrototypeNames();
+  const { consumerName, businessName, consumerHomeCurrency, businessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted, jointCardType, setJointCardType } = usePrototypeNames();
   const { t } = useLanguage();
 
   // Initialise state from the current URL
@@ -516,7 +516,7 @@ function AppInner() {
   const renderContent = () => {
     if (subPage) {
       if (subPage.type === 'get-more') {
-        return <GetMoreFromWise onClose={() => { setTransitionDirection('pop'); setSubPage(null); }} onOpenJointPitch={() => setActiveFlow({ type: 'joint-invite', step: 'pitch' })} pendingInviteName={pendingJointInviteName} />;
+        return <GetMoreFromWise onClose={() => { setTransitionDirection('pop'); setSubPage(null); }} onOpenJointPitch={() => setActiveFlow({ type: 'joint-invite', step: 'pitch' })} pendingInviteName={pendingJointInviteName} jointAccountAccepted={jointAccountAccepted} />;
       }
       if (subPage.type === 'joint-invite') {
         return (
@@ -631,6 +631,7 @@ function AppInner() {
           pendingJointInviteName={pendingJointInviteName}
           hasIncomingInvite={hasIncomingInvite}
           jointAccountAccepted={jointAccountAccepted}
+          jointCardType={jointCardType}
           onOpenJointInvite={handleOpenJointInvite}
           onReviewIncomingInvite={() => handleOpenJointAccept('Sky Dog', 'https://www.tapback.co/api/avatar/sky-dog.webp')}
           onReviewPendingInvite={() => pendingJointInviteName && setActiveFlow({ type: 'joint-pending', recipientName: pendingJointInviteName })}
@@ -742,10 +743,12 @@ function AppInner() {
         <JointAccountAcceptFlow
           inviterName={activeFlow.inviterName}
           inviterAvatarUrl={activeFlow.inviterAvatarUrl}
+          userAvatarUrl={avatarUrl}
           onClose={handleCloseFlow}
           onAccept={(cardType) => {
             setHasIncomingInvite(false);
             setJointAccountAccepted(true);
+            setJointCardType(cardType);
             handleCloseFlow();
           }}
           onDecline={() => {
@@ -766,7 +769,7 @@ function AppInner() {
     <div className="page-layout">
       {import.meta.env.DEV && <Agentation />}
       <div className="column-layout-main">
-        {subPage?.type !== 'joint-invite' && <IOSTopBar name={activeName} initials={activeInitials} avatarUrl={avatarUrl} onAccountClick={handleAccountClick} showBack={showBack} onBack={handleBack} hideAccountSwitcher={activeNavItem === 'Account'} activeNavItem={activeNavItem} subPageType={subPage?.type ?? null} subPageCode={subPage?.type === 'account-details' ? subPage.code : undefined} scrollTitle={scrollTitle} accountType={accountType} onInsightsClick={() => { setShowMoreMenu(false); setTransitionDirection('push'); setPreviousNavItem(activeNavItem); setActiveNavItem('Insights'); setSubPage(null); }} onMore={() => { triggerHaptic(); setShowMoreMenu(true); }} onOpenJointInvite={handleOpenGetMore} />}
+        {subPage?.type !== 'joint-invite' && <IOSTopBar name={activeName} initials={activeInitials} avatarUrl={avatarUrl} onAccountClick={handleAccountClick} showBack={showBack} onBack={handleBack} hideAccountSwitcher={activeNavItem === 'Account'} activeNavItem={activeNavItem} subPageType={subPage?.type ?? null} subPageCode={subPage?.type === 'account-details' ? subPage.code : undefined} scrollTitle={scrollTitle} accountType={accountType} onInsightsClick={() => { setShowMoreMenu(false); setTransitionDirection('push'); setPreviousNavItem(activeNavItem); setActiveNavItem('Insights'); setSubPage(null); }} onMore={() => { triggerHaptic(); setShowMoreMenu(true); }} onOpenJointInvite={handleOpenGetMore} jointAccountAccepted={jointAccountAccepted} />}
         <main className="container-content" id="main" ref={mainRef}>
           <PageTransition direction={transitionDirection} onComplete={() => setTransitionDirection(null)}>
             {renderContent()}

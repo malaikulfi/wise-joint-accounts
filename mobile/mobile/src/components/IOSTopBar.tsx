@@ -79,6 +79,7 @@ export function IOSTopBar({
   onInsightsClick,
   onMore,
   onOpenJointInvite,
+  jointAccountAccepted,
 }: {
   name: string;
   initials: string;
@@ -95,6 +96,7 @@ export function IOSTopBar({
   onInsightsClick?: () => void;
   onMore?: () => void;
   onOpenJointInvite?: () => void;
+  jointAccountAccepted?: boolean;
 }) {
   const { t } = useLanguage();
   const [eyeOpen, setEyeOpen] = useState(false);

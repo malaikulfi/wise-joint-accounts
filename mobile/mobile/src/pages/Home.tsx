@@ -82,7 +82,7 @@ const GROUP_BALANCE = groupTotalBalance;
 
 type SendAgainRecipient = { name: string; subtitle: string; avatarUrl?: string; hasFastFlag: boolean; badgeFlagCode?: string };
 
-export function Home({ onNavigate, onNavigateAccount, onNavigateCurrency, onNavigateGroupAccount, onNavigateGroupCurrency, onNavigateJarAccount, onNavigateJarCurrency, accountType = 'personal', onAddMoney, onSend, onSendWithCurrency, onSendAgain, onRequest, onPaymentLink, onAccountDetails, pendingJointInviteName, hasIncomingInvite, jointAccountAccepted, onOpenJointInvite, onReviewIncomingInvite, onReviewPendingInvite }: { onNavigate?: (page: string, push?: boolean) => void; onNavigateAccount?: () => void; onNavigateCurrency?: (code: string) => void; onNavigateGroupAccount?: () => void; onNavigateGroupCurrency?: (code: string) => void; onNavigateJarAccount?: (jarId: string) => void; onNavigateJarCurrency?: (jarId: string, code: string) => void; accountType?: AccountType; onAddMoney?: () => void; onSend?: () => void; onSendWithCurrency?: (sourceCurrency: string, targetCurrency: string, sourceAmount?: string, targetAmount?: string) => void; onSendAgain?: (recipient: SendAgainRecipient, amount?: string) => void; onRequest?: () => void; onPaymentLink?: () => void; onAccountDetails?: () => void; pendingJointInviteName?: string | null; hasIncomingInvite?: boolean; jointAccountAccepted?: boolean; onOpenJointInvite?: () => void; onReviewIncomingInvite?: () => void; onReviewPendingInvite?: () => void }) {
+export function Home({ onNavigate, onNavigateAccount, onNavigateCurrency, onNavigateGroupAccount, onNavigateGroupCurrency, onNavigateJarAccount, onNavigateJarCurrency, accountType = 'personal', onAddMoney, onSend, onSendWithCurrency, onSendAgain, onRequest, onPaymentLink, onAccountDetails, pendingJointInviteName, hasIncomingInvite, jointAccountAccepted, jointCardType, onOpenJointInvite, onReviewIncomingInvite, onReviewPendingInvite }: { onNavigate?: (page: string, push?: boolean) => void; onNavigateAccount?: () => void; onNavigateCurrency?: (code: string) => void; onNavigateGroupAccount?: () => void; onNavigateGroupCurrency?: (code: string) => void; onNavigateJarAccount?: (jarId: string) => void; onNavigateJarCurrency?: (jarId: string, code: string) => void; accountType?: AccountType; onAddMoney?: () => void; onSend?: () => void; onSendWithCurrency?: (sourceCurrency: string, targetCurrency: string, sourceAmount?: string, targetAmount?: string) => void; onSendAgain?: (recipient: SendAgainRecipient, amount?: string) => void; onRequest?: () => void; onPaymentLink?: () => void; onAccountDetails?: () => void; pendingJointInviteName?: string | null; hasIncomingInvite?: boolean; jointAccountAccepted?: boolean; jointCardType?: 'digital' | 'physical' | null; onOpenJointInvite?: () => void; onReviewIncomingInvite?: () => void; onReviewPendingInvite?: () => void }) {
   const { consumerName, businessName, consumerHomeCurrency, businessHomeCurrency } = usePrototypeNames();
   const { t } = useLanguage();
   const txLabels = useTxLabels();
@@ -190,24 +190,30 @@ export function Home({ onNavigate, onNavigateAccount, onNavigateCurrency, onNavi
               />
             );
           })()}
-          {jointAccountAccepted && (
-            <MultiCurrencyAccountCard
-              title="Joint account"
-              totalAmount="£0.00"
-              currencyCount={1}
-              balances={[{ code: 'GBP', amount: '£0.00' }]}
-              hasCards={true}
-              cardCount={2}
-              onNavigateCards={onNavigate ? () => onNavigate('Cards') : undefined}
-              onNavigateAccount={() => {}}
-              onNavigateCurrency={() => {}}
-              cardTopImage={new URL('../assets/card-tapestry.jpg', import.meta.url).href}
-              cardBottomImage={new URL('../assets/card-green.jpg', import.meta.url).href}
-              hideAccountDetails
-              cardInfoLight
-              currencyData={[]}
-            />
-          )}
+          {jointAccountAccepted && (() => {
+            const effectiveCardType = jointCardType ?? 'physical';
+            const isDigital = effectiveCardType === 'digital';
+            const jointCardImg = isDigital
+              ? new URL('../assets/card-tapestry-flat.jpg', import.meta.url).href
+              : new URL('../assets/card-green-flat.jpg', import.meta.url).href;
+            return (
+              <MultiCurrencyAccountCard
+                title="Joint account"
+                totalAmount="£0.00"
+                currencyCount={1}
+                balances={[{ code: 'GBP', amount: '£0.00' }]}
+                hasCards={true}
+                cardCount={1}
+                onNavigateCards={onNavigate ? () => onNavigate('Cards') : undefined}
+                onNavigateAccount={() => {}}
+                onNavigateCurrency={() => {}}
+                cardTopImage={jointCardImg}
+                cardBottomImage={jointCardImg}
+                cardInfoLight={isDigital}
+                currencyData={[]}
+              />
+            );
+          })()}
           <EmptyAccountCard />
         </Carousel>
       </section>

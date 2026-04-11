@@ -17,7 +17,7 @@ type Section = {
   items: SectionItem[];
 };
 
-export function GetMoreFromWise({ onClose, onOpenJointPitch, pendingInviteName }: { onClose: () => void; onOpenJointPitch: () => void; pendingInviteName?: string | null }) {
+export function GetMoreFromWise({ onClose, onOpenJointPitch, pendingInviteName, jointAccountAccepted }: { onClose: () => void; onOpenJointPitch: () => void; pendingInviteName?: string | null; jointAccountAccepted?: boolean }) {
   const { t } = useLanguage();
   const hasPendingInvite = !!pendingInviteName;
 
@@ -26,7 +26,7 @@ export function GetMoreFromWise({ onClose, onOpenJointPitch, pendingInviteName }
       id: 'accounts',
       labelKey: 'getMore.section.accounts',
       items: [
-        { icon: <People size={24} />, iconBg: '#163300', iconColor: '#9fe870', titleKey: 'getMore.joint.title', subtitleKey: hasPendingInvite ? undefined : 'getMore.joint.subtitle', action: hasPendingInvite ? undefined : onOpenJointPitch },
+        { icon: <People size={24} />, iconBg: '#163300', iconColor: '#9fe870', titleKey: 'getMore.joint.title', subtitleKey: (hasPendingInvite || jointAccountAccepted) ? undefined : 'getMore.joint.subtitle', action: (hasPendingInvite || jointAccountAccepted) ? undefined : onOpenJointPitch },
         { icon: <CardWise size={24} />, iconBg: '#163300', iconColor: '#9fe870', titleKey: 'getMore.card617.title', subtitleKey: 'getMore.card617.subtitle' },
         { icon: <Suitcase size={24} />, iconBg: '#163300', iconColor: '#9fe870', titleKey: 'getMore.business.title', subtitleKey: 'getMore.business.subtitle' },
       ],
@@ -74,7 +74,13 @@ export function GetMoreFromWise({ onClose, onOpenJointPitch, pendingInviteName }
           </p>
           <ul className="wds-list list-unstyled m-y-0">
             {section.items.map((item, idx) => {
-              const isJointDisabled = item.titleKey === 'getMore.joint.title' && hasPendingInvite;
+              const isJoint = item.titleKey === 'getMore.joint.title';
+              const isJointDisabled = isJoint && (hasPendingInvite || jointAccountAccepted);
+              const jointSubtitle = isJoint && jointAccountAccepted
+                ? 'You already have a joint account'
+                : isJoint && hasPendingInvite
+                ? 'Waiting for your invitation to be accepted'
+                : undefined;
               return (
                 <li key={idx} onClick={!isJointDisabled ? item.action : undefined} style={isJointDisabled ? { opacity: 0.5, pointerEvents: 'none' } : item.action ? { cursor: 'pointer' } : undefined}>
                   <ListItem
@@ -86,7 +92,7 @@ export function GetMoreFromWise({ onClose, onOpenJointPitch, pendingInviteName }
                       </ListItem.AvatarView>
                     }
                     title={<span className="np-text-body-large" style={{ fontWeight: 600 }}>{t(item.titleKey as any)}</span>}
-                    subtitle={isJointDisabled ? 'Waiting for your invitation to be accepted' : (item.subtitleKey ? t(item.subtitleKey as any) : undefined)}
+                    subtitle={jointSubtitle ?? (item.subtitleKey ? t(item.subtitleKey as any) : undefined)}
                     control={<ListItem.Navigation />}
                   />
                 </li>

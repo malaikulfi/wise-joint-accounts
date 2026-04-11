@@ -290,7 +290,7 @@ import { useLiquidGlass } from '../hooks/useLiquidGlass';
 export function PrototypeSettings() {
   const { isScreenModeDark, setScreenMode } = useTheme();
   const createSnackbar = useSnackbar();
-  const { consumerName, setConsumerName, businessName, setBusinessName, consumerHomeCurrency, setConsumerHomeCurrency, businessHomeCurrency, setBusinessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted } = usePrototypeNames();
+  const { consumerName, setConsumerName, businessName, setBusinessName, consumerHomeCurrency, setConsumerHomeCurrency, businessHomeCurrency, setBusinessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted, setJointCardType } = usePrototypeNames();
   const { language, setLanguage, t } = useLanguage();
 
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -655,6 +655,7 @@ export function PrototypeSettings() {
                       setHasIncomingInvite(false);
                       setPendingJointInviteName(null);
                       setJointAccountAccepted(false);
+                      setJointCardType(null);
                     }}>Set</Button>
                   }
                 />
@@ -667,6 +668,7 @@ export function PrototypeSettings() {
                       setHasIncomingInvite(true);
                       setPendingJointInviteName(null);
                       setJointAccountAccepted(false);
+                      setJointCardType(null);
                     }}>Set</Button>
                   }
                 />
@@ -679,6 +681,7 @@ export function PrototypeSettings() {
                       setHasIncomingInvite(false);
                       setPendingJointInviteName('Sky Dog');
                       setJointAccountAccepted(false);
+                      setJointCardType(null);
                     }}>Set</Button>
                   }
                 />
@@ -691,6 +694,7 @@ export function PrototypeSettings() {
                       setHasIncomingInvite(false);
                       setPendingJointInviteName(null);
                       setJointAccountAccepted(true);
+                      setJointCardType('physical');
                     }}>Set</Button>
                   }
                 />
@@ -700,6 +704,7 @@ export function PrototypeSettings() {
                   setHasIncomingInvite(false);
                   setPendingJointInviteName(null);
                   setJointAccountAccepted(false);
+                  setJointCardType(null);
                 }}>{t('settings.jointReset')}</Button>
               </div>
             </div>

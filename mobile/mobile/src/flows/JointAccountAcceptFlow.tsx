@@ -1,17 +1,34 @@
 import { useState } from 'react';
 import { Button, Select } from '@transferwise/components';
-import { Illustration } from '@wise/art';
 import { FlowHeader } from '../components/FlowHeader';
 import type { AccountType } from '../App';
 
 const cardGreenUrl = new URL('../assets/card-green.jpg', import.meta.url).href;
 const cardTapestryUrl = new URL('../assets/card-tapestry.jpg', import.meta.url).href;
+const cardDigitalUrl = new URL('../assets/card-digital.png', import.meta.url).href;
+const swatch1Url = new URL('../assets/swatch-1.png', import.meta.url).href;
+const swatch2Url = new URL('../assets/swatch-2.png', import.meta.url).href;
+const swatch3Url = new URL('../assets/swatch-3.png', import.meta.url).href;
+const swatch4Url = new URL('../assets/swatch-4.png', import.meta.url).href;
+const swatch5Url = new URL('../assets/swatch-5.png', import.meta.url).href;
 
-type Screen = 'pitch' | 'card-type' | 'address' | 'delivery' | 'name-on-card' | 'pin' | 'pin-confirm' | 'review' | 'confirm' | 'success';
+// 5 digital card variants — images from Figma
+const DIGITAL_VARIANTS = [
+  { id: 'v1', cardImg: cardDigitalUrl, swatchImg: swatch1Url, filter: undefined },
+  { id: 'v2', cardImg: cardDigitalUrl, swatchImg: swatch2Url, filter: 'hue-rotate(40deg) saturate(1.1)' },
+  { id: 'v3', cardImg: cardDigitalUrl, swatchImg: swatch3Url, filter: 'hue-rotate(90deg) saturate(1.3)' },
+  { id: 'v4', cardImg: cardDigitalUrl, swatchImg: swatch4Url, filter: 'hue-rotate(195deg) saturate(1.2)' },
+  { id: 'v5', cardImg: cardDigitalUrl, swatchImg: swatch5Url, filter: 'hue-rotate(290deg) saturate(1.3)' },
+] as const;
+
+type DigitalVariantId = typeof DIGITAL_VARIANTS[number]['id'];
+
+type Screen = 'pitch' | 'card-type' | 'address' | 'delivery' | 'name-on-card' | 'pin' | 'pin-confirm' | 'review' | 'confirm' | 'digital-customise';
 
 type Props = {
   inviterName: string;
   inviterAvatarUrl: string;
+  userAvatarUrl: string;
   onClose: () => void;
   onAccept?: (cardType: 'digital' | 'physical') => void;
   onDecline?: () => void;
@@ -85,7 +102,7 @@ function Numpad({ onPress, onDelete }: { onPress: (digit: string) => void; onDel
   );
 }
 
-export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, onClose, onAccept, onDecline, onStepChange, accountType: _accountType }: Props) {
+export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, userAvatarUrl, onClose, onAccept, onDecline, onStepChange, accountType: _accountType }: Props) {
   const [screen, setScreen] = useState<Screen>('pitch');
   const [cardType, setCardType] = useState<'digital' | 'physical' | null>(null);
   const [address1, setAddress1] = useState('123 big house');
@@ -97,6 +114,7 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, onClose,
   const [nameOnCard, setNameOnCard] = useState<'first-last' | 'last-first'>('first-last');
   const [pin, setPin] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
+  const [digitalVariant, setDigitalVariant] = useState<DigitalVariantId>('v1');
 
   // Derived: name options based on inviterName (split first/last)
   const nameParts = inviterName.trim().split(' ');
@@ -115,37 +133,6 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, onClose,
     onStepChange?.(newScreen);
   };
 
-  // ── SUCCESS ──────────────────────────────────────────────────────────────
-  if (screen === 'success') {
-    return (
-      <div className="joint-accept">
-        <div className="joint-accept__scroll card-success">
-          <div className="card-success__skip">
-            <Button v2 size="sm" priority="tertiary" onClick={() => onAccept?.('physical')}>Skip</Button>
-          </div>
-
-          <div className="card-success__hero">
-            <Illustration name="marble-card" size="large" />
-          </div>
-
-          <div className="card-success__body">
-            <h1 className="np-display np-text-display-medium card-success__title">
-              YOUR CARD HAS BEEN ORDERED
-            </h1>
-            <p className="np-text-body-large card-success__subtitle">
-              It should arrive in the next few days. For now, you can add money so you're all set up to spend.
-            </p>
-          </div>
-        </div>
-
-        <div className="joint-accept__footer">
-          <Button v2 size="lg" priority="primary" block onClick={() => onAccept?.(cardType || 'physical')}>
-            Add money
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   // ── CONFIRM ORDER ─────────────────────────────────────────────────────────
   if (screen === 'confirm') {
@@ -158,8 +145,11 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, onClose,
               Confirm your order
             </h1>
 
+            {/* Your order */}
             <div className="card-confirm__section">
-              <div className="card-confirm__section-label np-text-body-default">Your order</div>
+              <div className="card-confirm__section-header">
+                <span className="np-text-body-default card-confirm__section-label">Your order</span>
+              </div>
               <div className="card-confirm__item">
                 <div className="card-confirm__item-icon">
                   <svg width="20" height="16" viewBox="0 0 20 16" fill="none">
@@ -175,25 +165,26 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, onClose,
               </div>
             </div>
 
+            {/* Payment method */}
             <div className="card-confirm__section">
               <div className="card-confirm__section-header">
-                <span className="card-confirm__section-label np-text-body-default">Payment method</span>
+                <span className="np-text-body-default card-confirm__section-label">Payment method</span>
                 <button className="card-confirm__change np-text-body-default-bold" type="button">Change</button>
               </div>
               <div className="card-confirm__payment">
                 <div className="card-confirm__applepay-badge">
-                  <svg width="38" height="16" viewBox="0 0 38 16" fill="none">
-                    <rect width="38" height="16" rx="3" fill="black" />
-                    <path d="M7.5 5C7.9 4.4 8.5 4 9.2 4C9.3 4.8 8.9 5.6 8.4 6.1C7.9 6.7 7.2 7.1 6.5 7C6.4 6.2 6.9 5.5 7.5 5ZM9.2 7.1C10.3 7.1 11 7.8 11 7.8C11 7.8 10.1 9.4 10.1 11C10.1 12.8 11.2 13.5 11.2 13.5C11.2 13.5 10.5 14.5 9.4 14.5C8.7 14.5 8.2 14 7.6 14C7 14 6.4 14.5 5.8 14.5C4.8 14.5 4 13.4 4 11C4 8.5 5.5 7.1 7 7.1C7.6 7.1 8.1 7.5 8.6 7.5C9.1 7.5 9.2 7.1 9.2 7.1Z" fill="white" />
-                    <text x="14" y="11.5" fontSize="7" fontWeight="600" fill="white" fontFamily="system-ui">Pay</text>
-                  </svg>
+                  <span className="card-confirm__applepay-apple card-confirm__applepay-apple--dark"></span>
+                  <span className="card-confirm__badge-pay">Pay</span>
                 </div>
                 <span className="np-text-body-large">Apple Pay</span>
               </div>
             </div>
 
+            {/* Price breakdown */}
             <div className="card-confirm__section">
-              <div className="card-confirm__section-label np-text-body-default">Price breakdown</div>
+              <div className="card-confirm__section-header">
+                <span className="np-text-body-default card-confirm__section-label">Price breakdown</span>
+              </div>
               <div className="card-confirm__breakdown-row">
                 <span className="np-text-body-default">Card order</span>
                 <span className="np-text-body-default">{cardCost} GBP</span>
@@ -212,10 +203,8 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, onClose,
           </div>
         </div>
         <div className="joint-accept__footer">
-          <button className="card-confirm__applepay-btn" onClick={() => handleScreenChange('success')} type="button">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M4.5 2C4.9 1.4 5.5 1 6.2 1C6.3 1.8 5.9 2.6 5.4 3.1C4.9 3.7 4.2 4.1 3.5 4C3.4 3.2 3.9 2.5 4.5 2ZM6.2 4.1C7.3 4.1 8 4.8 8 4.8C8 4.8 7.1 6.4 7.1 8C7.1 9.8 8.2 10.5 8.2 10.5C8.2 10.5 7.5 11.5 6.4 11.5C5.7 11.5 5.2 11 4.6 11C4 11 3.4 11.5 2.8 11.5C1.8 11.5 1 10.4 1 8C1 5.5 2.5 4.1 4 4.1C4.6 4.1 5.1 4.5 5.6 4.5C6.1 4.5 6.2 4.1 6.2 4.1Z" fill="white" />
-            </svg>
+          <button className="card-confirm__applepay-btn" onClick={() => onAccept?.('physical')} type="button">
+            <span className="card-confirm__applepay-apple"></span>
             <span>Pay</span>
           </button>
         </div>
@@ -321,7 +310,7 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, onClose,
         const next = pinConfirm + digit;
         setPinConfirm(next);
         if (next.length === 4) {
-          handleScreenChange('review');
+          setTimeout(() => handleScreenChange('review'), 300);
         }
       }
     };
@@ -341,7 +330,6 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, onClose,
         <div className="card-pin__numpad-area">
           <button
             className={`card-pin__continue-btn${pinConfirm.length === 4 ? ' card-pin__continue-btn--active' : ''}`}
-            disabled={pinConfirm.length < 4}
             onClick={() => handleScreenChange('review')}
             type="button"
           >
@@ -360,7 +348,7 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, onClose,
         const next = pin + digit;
         setPin(next);
         if (next.length === 4) {
-          handleScreenChange('pin-confirm');
+          setTimeout(() => handleScreenChange('pin-confirm'), 300);
         }
       }
     };
@@ -383,7 +371,6 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, onClose,
         <div className="card-pin__numpad-area">
           <button
             className={`card-pin__continue-btn${pin.length === 4 ? ' card-pin__continue-btn--active' : ''}`}
-            disabled={pin.length < 4}
             onClick={() => handleScreenChange('pin-confirm')}
             type="button"
           >
@@ -538,6 +525,65 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, onClose,
     );
   }
 
+
+  // ── DIGITAL CUSTOMISE ─────────────────────────────────────────────────────
+  if (screen === 'digital-customise') {
+    const selectedVariant = DIGITAL_VARIANTS.find(v => v.id === digitalVariant) ?? DIGITAL_VARIANTS[0];
+    return (
+      <div className="digital-customise">
+        <div className="digital-customise__topbar">
+          <button className="digital-customise__back" onClick={() => handleScreenChange('card-type')} type="button" aria-label="Back">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M15 18L9 12L15 6" stroke="#9fe870" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div className="digital-customise__body">
+          <h1 className="digital-customise__title">Customise your card</h1>
+
+          <div className="digital-customise__card-wrap">
+            <img
+              src={selectedVariant.cardImg}
+              alt="Card preview"
+              className="digital-customise__card-img"
+              style={selectedVariant.filter ? { filter: selectedVariant.filter } : undefined}
+            />
+          </div>
+
+          <div className="digital-customise__swatches">
+            {DIGITAL_VARIANTS.map((v) => (
+              <button
+                key={v.id}
+                className={`digital-customise__swatch${v.id === digitalVariant ? ' digital-customise__swatch--selected' : ''}`}
+                onClick={() => setDigitalVariant(v.id)}
+                type="button"
+                aria-label={v.id}
+              >
+                <img src={v.swatchImg} alt="" className="digital-customise__swatch-img" />
+                {v.id === digitalVariant && (
+                  <svg className="digital-customise__swatch-check" viewBox="0 0 20 20" fill="none" width="16" height="16">
+                    <path d="M4 10.5L8.5 15L16 7" stroke="#163300" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="digital-customise__footer">
+          <button
+            className="digital-customise__confirm-btn"
+            type="button"
+            onClick={() => onAccept?.('digital')}
+          >
+            Confirm
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // ── CARD TYPE ─────────────────────────────────────────────────────────────
   if (screen === 'card-type') {
     return (
@@ -553,7 +599,7 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, onClose,
               className="card-choose__option"
               role="button"
               tabIndex={0}
-              onClick={() => { setCardType('digital'); onAccept?.('digital'); }}
+              onClick={() => { setCardType('digital'); handleScreenChange('digital-customise'); }}
             >
               <div className="card-choose__option-top">
                 <div className="card-choose__option-name">DIGITAL</div>
@@ -682,3 +728,4 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, onClose,
     </div>
   );
 }
+

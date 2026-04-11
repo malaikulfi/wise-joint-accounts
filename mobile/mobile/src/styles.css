@@ -768,6 +768,9 @@ html[class*="dark"] .mca-cards__empty-card {
   position: relative;
   z-index: 2;
   padding: 0 8px 8px;
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
 }
 
 .mca-front__cutout {
@@ -869,6 +872,11 @@ html[class*="dark"] .mca-cards__empty-card {
   grid-template-columns: 1fr;
 }
 
+/* Single-currency balance row spans full width */
+.mca-balances .wds-list-item:only-child {
+  grid-column: 1 / -1;
+}
+
 /* Diagonal double avatar scaled to fit 24px container in MCA card */
 .mca-diagonal-avatar {
   width: 24px;
@@ -891,6 +899,7 @@ html[class*="dark"] .mca-cards__empty-card {
 
 .mca-footer {
   padding: 12px 0 0;
+  margin-top: auto;
 }
 
 /* ===== Empty Account Card ===== */
@@ -6067,6 +6076,23 @@ html.np-theme-business--dark .ios-glass-btn--pill {
   box-shadow: 0 8px 40px rgba(0,0,0,0.25);
 }
 
+html.np-theme-personal--dark .ios-glass-btn--white,
+html.np-theme-dark .ios-glass-btn--white,
+html.np-theme-business--dark .ios-glass-btn--white {
+  background: #163300;
+  box-shadow: none;
+  color: #9fe870;
+}
+
+html.np-theme-personal--dark .ios-glass-btn--white .ios-glass-btn__label,
+html.np-theme-personal--dark .ios-glass-btn--white .ios-glass-btn__icon,
+html.np-theme-dark .ios-glass-btn--white .ios-glass-btn__label,
+html.np-theme-dark .ios-glass-btn--white .ios-glass-btn__icon,
+html.np-theme-business--dark .ios-glass-btn--white .ios-glass-btn__label,
+html.np-theme-business--dark .ios-glass-btn--white .ios-glass-btn__icon {
+  color: #9fe870;
+}
+
 html.np-theme-personal--dark .ios-glass-btn--accent,
 html.np-theme-dark .ios-glass-btn--accent,
 html.np-theme-business--dark .ios-glass-btn--accent {
@@ -6491,6 +6517,266 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
   right: 0;
 }
 
+/* ── Digital card customise screen ───────────────────────────────────────── */
+.digital-customise {
+  display: flex;
+  flex-direction: column;
+  background: #121511;
+  color: #fff;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.digital-customise__topbar {
+  display: flex;
+  align-items: center;
+  padding: 56px 20px 0;
+  flex-shrink: 0;
+}
+
+.digital-customise__back {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: #9fe870;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.digital-customise__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 16px 0;
+  min-height: 0;
+}
+
+.digital-customise__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 28px;
+  letter-spacing: -0.3px;
+}
+
+.digital-customise__card-wrap {
+  border-radius: 16px;
+  overflow: hidden;
+  aspect-ratio: 1.586;
+  margin-bottom: 32px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+}
+
+.digital-customise__card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: filter 0.3s ease;
+}
+
+.digital-customise__swatches {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.digital-customise__swatch {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.digital-customise__swatch--selected {
+  transform: scale(1.12);
+  outline: 2.5px solid rgba(255,255,255,0.7);
+  outline-offset: 2px;
+}
+
+.digital-customise__swatch-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.digital-customise__swatch-check {
+  position: absolute;
+  pointer-events: none;
+}
+
+.digital-customise__footer {
+  padding: 12px 16px max(24px, env(safe-area-inset-bottom));
+}
+
+.digital-customise__confirm-btn {
+  width: 100%;
+  background: #9fe870;
+  color: #163300;
+  border: none;
+  border-radius: 28px;
+  font-size: 17px;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 16px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Digital card success screen ─────────────────────────────────────────── */
+.digital-success {
+  display: flex;
+  flex-direction: column;
+  background: #121511;
+  color: #fff;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.digital-success__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 56px 20px 0;
+  flex-shrink: 0;
+}
+
+.digital-success__close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.digital-success__skip {
+  background: rgba(255,255,255,0.12);
+  border: none;
+  border-radius: 20px;
+  color: #9fe870;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 8px 18px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.digital-success__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 32px 0;
+  text-align: center;
+}
+
+.digital-success__title {
+  font-size: clamp(40px, 11vw, 56px);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: #fff;
+  margin: 0 0 16px;
+}
+
+.digital-success__subtitle {
+  color: rgba(255,255,255,0.6);
+  margin: 0 0 32px;
+  max-width: 260px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.digital-success__check-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.digital-success__footer {
+  padding: 0 16px max(32px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 16px;
+}
+
+.digital-success__wallet-btn {
+  width: 100%;
+  background: #000;
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.digital-success__wallet-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.digital-success__wallet-btn:active {
+  opacity: 0.8;
+}
+
+.digital-success__wallet-icon-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.digital-success__link {
+  background: none;
+  border: none;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  color: #9fe870;
+  cursor: pointer;
+  padding: 12px;
+  text-decoration: underline;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* Card type selection */
 .card-choose__body {
   display: flex;
@@ -6675,6 +6961,401 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
 
 .card-review__edit:active {
   opacity: 0.7;
+}
+
+/* ── Joint account success animation ────────────────────────── */
+
+@keyframes js-avatar-merge-left {
+  from { transform: translateX(-80px); }
+  to   { transform: translateX(-4px); }
+}
+@keyframes js-avatar-merge-right {
+  from { transform: translateX(80px); }
+  to   { transform: translateX(4px); }
+}
+@keyframes js-avatars-fade {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes js-circle-appear {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes js-circle-grow {
+  from { width: 112px; height: 112px; }
+  to   { width: 172px; height: 172px; }
+}
+@keyframes js-circle-expand {
+  from { transform: translate(-50%, -50%) scale(1); }
+  to   { transform: translate(-50%, -50%) scale(25); }
+}
+@keyframes js-check-pop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  60%  { transform: translate(-50%, -50%) scale(1.12); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes js-bg-darken {
+  from { background: #163300; }
+  to   { background: #121511; }
+}
+@keyframes js-final-slide-up {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes js-card-slide-out {
+  0%   { transform: translateY(0); }
+  40%  { transform: translateY(-56px); }
+  100% { transform: translateY(0); }
+}
+
+/* Root container */
+.js-anim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+  background: #163300;
+  transition: background 0.5s ease;
+}
+.js-anim--dark {
+  background: #121511;
+}
+
+/* Title — bottom-left, fades out after grow phase */
+.js-anim__title-wrap {
+  position: absolute;
+  bottom: 140px;
+  left: 0;
+  right: 0;
+  padding: 0 28px;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+.js-anim__title-wrap--visible {
+  opacity: 1;
+}
+.js-anim__title {
+  color: #9FE870;
+  font-size: clamp(36px, 10vw, 52px);
+  font-weight: 900;
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+/* Avatars — absolutely positioned, start far apart */
+.js-anim__avatar-wrap {
+  position: absolute;
+  top: 50%;
+  width: 106px;
+  height: 106px;
+  margin-top: -53px;
+  border-radius: 50%;
+  overflow: hidden;
+  z-index: 3;
+  transition: opacity 0.3s ease;
+}
+.js-anim__avatar-wrap--left {
+  left: 50%;
+  animation: js-avatar-merge-left 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.js-anim__avatar-wrap--right {
+  left: 50%;
+  animation: js-avatar-merge-right 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.js-anim__avatar-wrap--merged {
+  /* keep position via animation forwards fill */
+}
+.js-anim__avatar-wrap--gone {
+  animation: js-avatars-fade 0.3s ease both;
+}
+.js-anim__avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Tapestry circle — centred, transitions through sizes */
+.js-anim__circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  z-index: 2;
+  opacity: 0;
+  width: 112px;
+  height: 112px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.js-anim__circle--small {
+  animation: js-circle-appear 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+.js-anim__circle--medium {
+  opacity: 1;
+  animation: js-circle-grow 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.js-anim__circle--full {
+  opacity: 1;
+  width: 172px;
+  height: 172px;
+  animation: js-circle-expand 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.js-anim__circle--gone {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* Dark green dot + checkmark */
+.js-anim__check-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 89px;
+  height: 89px;
+  border-radius: 50%;
+  background: #163300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+  opacity: 0;
+  pointer-events: none;
+}
+.js-anim__check-dot--visible {
+  animation: js-check-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Final screen */
+.js-anim__final {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  background: #121511;
+  opacity: 0;
+  pointer-events: none;
+}
+.js-anim__final--visible {
+  animation: js-final-slide-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  pointer-events: auto;
+}
+
+.js-anim__final-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 56px 16px 0;
+}
+
+.js-anim__final-close {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--color-content-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.js-anim__final-body {
+  flex: 1;
+  padding: 16px 20px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.js-anim__final-title {
+  font-size: clamp(32px, 9vw, 48px);
+  font-weight: 900;
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+  margin: 0 0 12px;
+  color: var(--color-content-primary);
+  text-transform: uppercase;
+}
+
+.js-anim__final-subtitle {
+  color: var(--color-content-secondary);
+  margin: 0 0 24px;
+}
+
+/* Wallet container */
+.js-anim__wallet {
+  background: #f3f4f3;
+  border-radius: 20px;
+  /* overflow set to visible via inline style so card can peek above */
+  position: relative;
+  width: 100%;
+}
+
+/* Card motion wrapper — Framer Motion drives y: [0, -70, 0] */
+.js-anim__wallet-card-motion {
+  position: relative;
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* Gradient background layer inside the card — color transitions as card extends */
+.js-anim__wallet-card-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: 20px 20px 0 0;
+}
+
+/* Image + overlay on top of gradient */
+.js-anim__wallet-card-inner {
+  position: relative;
+}
+
+.js-anim__wallet-card-img {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  display: block;
+  border-radius: 20px 20px 0 0;
+}
+
+.js-anim__wallet-card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.js-anim__wallet-card-label {
+  color: #163300;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Card pocket notch — sits between card and account rows */
+.js-anim__wallet-pocket {
+  display: block;
+  height: 16px;
+  overflow: hidden;
+  background: #f3f4f3;
+  margin-top: -1px;
+}
+
+/* Account rows */
+.js-anim__wallet-body {
+  padding: 0 16px;
+  background: #f3f4f3;
+}
+
+.js-anim__wallet-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.js-anim__wallet-row:last-child {
+  border-bottom: none;
+}
+
+.js-anim__wallet-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #121511;
+}
+
+.js-anim__wallet-row-flag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #121511;
+}
+
+.js-anim__wallet-chevron {
+  color: #121511;
+  font-size: 18px;
+  opacity: 0.4;
+}
+
+/* Footer */
+.js-anim__final-footer {
+  padding: 16px 20px max(20px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.js-anim__apple-wallet-btn {
+  width: 100%;
+  padding: 16px;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.js-anim__apple-wallet-btn:active {
+  opacity: 0.85;
+}
+
+.js-anim__apple-logo::before {
+  content: '\f8ff';
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 20px;
+  line-height: 1;
+  color: #fff;
+}
+
+.js-anim__final-link {
+  background: none;
+  border: none;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--color-interactive-primary);
+  cursor: pointer;
+  padding: 4px;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  text-decoration: none;
+}
+
+.js-anim__replay-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--color-content-secondary);
+  cursor: pointer;
+  padding: 8px 0 0;
+  align-self: center;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Success screen */
@@ -6862,15 +7543,15 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
 .card-review2__edit,
 .card-review2__show {
   background: var(--color-background-neutral);
-  border: 1px solid var(--color-border-neutral);
+  border: none;
   border-radius: 20px;
-  padding: 6px 14px;
+  padding: 8px 16px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   flex-shrink: 0;
-  color: var(--color-content-primary);
+  color: var(--color-interactive-primary);
   margin-top: 4px;
   -webkit-tap-highlight-color: transparent;
 }
@@ -6929,19 +7610,20 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
   width: 100%;
   padding: 18px;
   border: none;
-  background: var(--color-interactive-primary);
-  color: var(--color-content-on-interactive-primary);
+  background: var(--color-background-neutral-strong, #3a3a3a);
+  color: var(--color-content-secondary);
   font-size: 16px;
   font-weight: 600;
   font-family: inherit;
-  cursor: pointer;
-  opacity: 0.45;
-  transition: opacity 0.15s;
+  cursor: default;
+  transition: background 0.15s, color 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
 
 .card-pin__continue-btn--active {
-  opacity: 1;
+  background: var(--color-interactive-primary);
+  color: var(--color-content-on-interactive-primary);
+  cursor: pointer;
 }
 
 .card-numpad {
@@ -7021,8 +7703,6 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
 
 .card-confirm__section-label {
   color: var(--color-content-secondary);
-  display: block;
-  margin-bottom: 12px;
 }
 
 .card-confirm__section-header {
@@ -7102,37 +7782,68 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
 .card-confirm__applepay-btn {
   width: 100%;
   padding: 18px;
-  background: #000;
-  color: #fff;
+  background: #fff;
+  color: #000;
   border: none;
   border-radius: 50px;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
-  font-family: inherit;
+  font-family: -apple-system, system-ui, sans-serif;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 4px;
   -webkit-tap-highlight-color: transparent;
+}
+
+.card-confirm__applepay-apple::before {
+  content: '\f8ff';
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 22px;
+  line-height: 1;
+  color: #000;
+}
+
+.card-confirm__applepay-apple--dark::before {
+  color: #000;
+}
+
+.card-confirm__applepay-badge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  border-radius: 5px;
+  padding: 4px 8px;
+  flex-shrink: 0;
+}
+
+.card-confirm__badge-pay {
+  font-family: -apple-system, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #000;
+  line-height: 1;
 }
 
 .card-confirm__applepay-btn:active {
   opacity: 0.85;
 }
 
-/* White glass button for GetMore */
+/* Open + pill — dark forest green with green text */
 .ios-glass-btn--white {
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  color: var(--color-content-primary);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  background: #163300;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: #9fe870;
+  box-shadow: none;
 }
 
 .ios-glass-btn--white .ios-glass-btn__label,
 .ios-glass-btn--white .ios-glass-btn__icon {
-  color: var(--color-content-primary);
+  color: #9fe870;
 }
 
 /* ===== Joint Account Pitch ===== */

@@ -87,7 +87,7 @@ export function MultiCurrencyAccountCard({
         >
           <div className="mca-cards__fire">
             <img
-              src={cardTopImage || new URL('../assets/card-tapestry.jpg', import.meta.url).href}
+              src={cardTopImage || new URL('../assets/card-tapestry-flat.jpg', import.meta.url).href}
               alt="Wise tapestry card"
               loading="eager"
             />
@@ -101,7 +101,7 @@ export function MultiCurrencyAccountCard({
           ) : (
             <img
               className="mca-cards__green"
-              src={cardBottomImage || new URL('../assets/card-green.jpg', import.meta.url).href}
+              src={cardBottomImage || new URL('../assets/card-green-flat.jpg', import.meta.url).href}
               alt="Wise green card"
               loading="eager"
             />
