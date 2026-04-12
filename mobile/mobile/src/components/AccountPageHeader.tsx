@@ -128,7 +128,7 @@ export function AccountPageHeader({
       <div className="account-header__bottom-row">
         <div className="account-header__balance-group">
           <h1 className="account-header__balance">{balance}</h1>
-          {type !== 'taxes' && type !== 'jar' && onAccountDetailsClick && (
+          {type !== 'jar' && onAccountDetailsClick && (
             <div className="account-header__details">
               <Button
                 v2

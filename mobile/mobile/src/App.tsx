@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { SnackbarProvider, Loader } from '@transferwise/components';
+import { SnackbarProvider, Loader, ListItem } from '@transferwise/components';
+import { Bank, Receive } from '@transferwise/icons';
+import { BottomSheet } from './components/BottomSheet';
 import { Agentation } from 'agentation';
 import { LanguageProvider, useLanguage } from './context/Language';
 import { triggerHaptic } from './hooks/useHaptics';
@@ -38,6 +40,7 @@ import { currencies } from '@shared/data/currencies';
 import { businessCurrencies } from '@shared/data/business-currencies';
 import { groupCurrencies } from '@shared/data/taxes-data';
 import { getJar, GROUP_IDS, savingsJar, suppliesJar } from '@shared/data/jar-data';
+import { jointAccountCurrencies } from '@shared/data/joint-account-data';
 
 export type AccountType = 'personal' | 'business';
 
@@ -45,9 +48,10 @@ type SubPage =
   | { type: 'account' }
   | { type: 'taxes-account' }
   | { type: 'jar-account'; jarId: string }
-  | { type: 'currency'; code: string; from?: 'account' | 'home' | 'taxes-account' | 'jar-account'; jar?: 'taxes'; jarId?: string }
-  | { type: 'account-details-list'; from: 'account' | 'payments' | 'home' }
-  | { type: 'account-details'; code: string; from: 'currency' | 'account-details-list' | 'payments'; jar?: 'taxes'; listFrom?: 'account' | 'payments' | 'home' }
+  | { type: 'joint-account'; initialTab?: string }
+  | { type: 'currency'; code: string; from?: 'account' | 'home' | 'taxes-account' | 'jar-account' | 'joint-account'; jar?: 'taxes' | 'joint'; jarId?: string }
+  | { type: 'account-details-list'; from: 'account' | 'payments' | 'home' | 'joint-account'; accountCurrencyCodes?: string[] }
+  | { type: 'account-details'; code: string; from: 'currency' | 'account-details-list' | 'payments'; jar?: 'taxes'; listFrom?: 'account' | 'payments' | 'home' | 'joint-account'; listAccountCurrencyCodes?: string[] }
   | { type: 'get-more' }
   | null;
 
@@ -67,6 +71,17 @@ type SendRecipient = {
 };
 
 type AccountStyle = { color: string; textColor: string; iconName: string };
+
+type ConvertParams = {
+  fromCurrency: string;
+  toCurrency: string;
+  accountLabel?: string;
+  toAccountLabel?: string;
+  jar?: 'taxes';
+  jarId?: string;
+  accountStyle?: AccountStyle;
+  toAccountStyle?: AccountStyle;
+};
 
 type ActiveFlow =
   | { type: 'add-money'; defaultCurrency: string; accountLabel: string; accountStyle: AccountStyle }
@@ -105,13 +120,14 @@ function resetScroll() {
 // ── URL ↔ State routing helpers ──────────────────────────────────────────────
 
 // Map balanceId → group context for URL resolution
-type BalanceOwner = { code: string; from: 'home' | 'taxes-account' | 'jar-account'; jar?: 'taxes'; jarId?: string };
+type BalanceOwner = { code: string; from: 'home' | 'taxes-account' | 'jar-account' | 'joint-account'; jar?: 'taxes' | 'joint'; jarId?: string };
 const balanceOwnerMap = new Map<string, BalanceOwner>();
 for (const c of currencies) balanceOwnerMap.set(c.balanceId, { code: c.code, from: 'home' });
 for (const c of businessCurrencies) balanceOwnerMap.set(c.balanceId, { code: c.code, from: 'home' });
 for (const c of groupCurrencies) balanceOwnerMap.set(c.balanceId, { code: c.code, from: 'taxes-account', jar: 'taxes' });
 for (const c of savingsJar.currencies) balanceOwnerMap.set(c.balanceId, { code: c.code, from: 'jar-account', jarId: savingsJar.id });
 for (const c of suppliesJar.currencies) balanceOwnerMap.set(c.balanceId, { code: c.code, from: 'jar-account', jarId: suppliesJar.id });
+for (const c of jointAccountCurrencies) balanceOwnerMap.set(c.balanceId, { code: c.code, from: 'joint-account', jar: 'joint' });
 
 function parseUrl(pathname: string): { navItem: string; subPage: SubPage } {
   // /groups/:id (8-digit numeric IDs)
@@ -120,6 +136,7 @@ function parseUrl(pathname: string): { navItem: string; subPage: SubPage } {
     const id = groupMatch[1];
     if (id === GROUP_IDS.currentAccount) return { navItem: 'Home', subPage: { type: 'account' } };
     if (id === GROUP_IDS.taxes) return { navItem: 'Home', subPage: { type: 'taxes-account' } };
+    if (id === GROUP_IDS.joint) return { navItem: 'Home', subPage: { type: 'joint-account' } };
     return { navItem: 'Home', subPage: { type: 'jar-account', jarId: id } };
   }
 
@@ -144,7 +161,7 @@ function parseUrl(pathname: string): { navItem: string; subPage: SubPage } {
     // Balance ID → individual account details page
     const owner = balanceOwnerMap.get(id);
     if (owner) {
-      return { navItem: 'Home', subPage: { type: 'account-details', code: owner.code, from: 'account-details-list', jar: owner.jar } };
+      return { navItem: 'Home', subPage: { type: 'account-details', code: owner.code, from: 'account-details-list', jar: owner.jar === 'taxes' ? 'taxes' : undefined } };
     }
   }
 
@@ -172,9 +189,10 @@ function stateToPath(navItem: string, subPage: SubPage, accountType: AccountType
       case 'account': return `/groups/${GROUP_IDS.currentAccount}`;
       case 'taxes-account': return `/groups/${GROUP_IDS.taxes}`;
       case 'jar-account': return `/groups/${subPage.jarId}`;
+      case 'joint-account': return `/groups/${GROUP_IDS.joint}`;
       case 'currency': {
         const jarDef = subPage.jarId ? getJar(subPage.jarId) : undefined;
-        const currencyList = jarDef ? jarDef.currencies : subPage.jar === 'taxes' ? groupCurrencies : (accountType === 'business' ? businessCurrencies : currencies);
+        const currencyList = jarDef ? jarDef.currencies : subPage.jar === 'taxes' ? groupCurrencies : subPage.jar === 'joint' ? jointAccountCurrencies : (accountType === 'business' ? businessCurrencies : currencies);
         const currencyData = currencyList.find((c) => c.code === subPage.code);
         return `/balances/${currencyData?.balanceId ?? subPage.code}`;
       }
@@ -211,6 +229,7 @@ function AppInner() {
   const [subPage, setSubPage] = useState<SubPage>(initial.subPage);
   const [accountType, setAccountType] = useState<AccountType>('personal');
   const [activeFlow, setActiveFlow] = useState<ActiveFlow>(null);
+  const [addMoneySourceSheet, setAddMoneySourceSheet] = useState<{ defaultCurrency: string; accountLabel: string; accountStyle: AccountStyle; convertParams?: ConvertParams } | null>(null);
   const [transitionDirection, setTransitionDirection] = useState<'push' | 'pop' | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [switching, setSwitching] = useState(false);
@@ -249,13 +268,35 @@ function AppInner() {
     ? { color: '#163300', textColor: '#9fe870', iconName: 'Wise' }
     : { color: 'var(--color-interactive-accent)', textColor: 'var(--color-interactive-control)', iconName: 'Wise' };
   const taxesGroupStyle: AccountStyle = { color: '#FFEB69', textColor: '#3a341c', iconName: 'Money' };
+  const jointAccountStyle: AccountStyle = { color: '#0e3d2e', textColor: '#9fe870', iconName: 'Wise' };
   function jarStyle(jar: { color: string; iconName: string }): AccountStyle {
     return { color: jar.color, textColor: '#121511', iconName: jar.iconName };
   }
 
-  const handleOpenAddMoney = useCallback((defaultCurrency: string, accountLabel?: string, accountStyle?: AccountStyle) => {
-    setActiveFlow({ type: 'add-money', defaultCurrency, accountLabel: accountLabel ?? t('home.currentAccount'), accountStyle: accountStyle ?? currentAccountStyle });
+  const handleOpenAddMoney = useCallback((defaultCurrency: string, accountLabel?: string, accountStyle?: AccountStyle, convertParams?: ConvertParams) => {
+    setAddMoneySourceSheet({ defaultCurrency, accountLabel: accountLabel ?? t('home.currentAccount'), accountStyle: accountStyle ?? currentAccountStyle, convertParams });
   }, [t, currentAccountStyle]);
+
+  const handleAddMoneyFromSource = useCallback((sheet: { defaultCurrency: string; accountLabel: string; accountStyle: AccountStyle; convertParams?: ConvertParams }, source: 'external' | 'wise') => {
+    setAddMoneySourceSheet(null);
+    if (source === 'wise') {
+      const cp = sheet.convertParams;
+      const homeCurrency = accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency;
+      setActiveFlow({
+        type: 'convert',
+        fromCurrency: cp?.fromCurrency ?? homeCurrency,
+        toCurrency: cp?.toCurrency ?? sheet.defaultCurrency,
+        accountLabel: cp?.accountLabel ?? t('home.currentAccount'),
+        toAccountLabel: cp?.toAccountLabel,
+        jar: cp?.jar,
+        jarId: cp?.jarId,
+        accountStyle: cp?.accountStyle ?? currentAccountStyle,
+        toAccountStyle: cp?.toAccountStyle,
+      });
+    } else {
+      setActiveFlow({ type: 'add-money', defaultCurrency: sheet.defaultCurrency, accountLabel: sheet.accountLabel, accountStyle: sheet.accountStyle });
+    }
+  }, [accountType, businessHomeCurrency, consumerHomeCurrency, t, currentAccountStyle]);
 
   const handleOpenConvert = useCallback((fromCurrency: string, toCurrency: string, accountLabel?: string, jar?: 'taxes', toAccountLabel?: string, accountStyle?: AccountStyle, toAccountStyle?: AccountStyle, jarId?: string) => {
     setActiveFlow({ type: 'convert', fromCurrency, toCurrency, accountLabel: accountLabel ?? t('home.currentAccount'), toAccountLabel, jar, accountStyle: accountStyle ?? currentAccountStyle, toAccountStyle, jarId });
@@ -294,6 +335,11 @@ function AppInner() {
 
   const handleOpenJointAccept = useCallback((inviterName: string, inviterAvatarUrl: string) => {
     setActiveFlow({ type: 'joint-accept', inviterName, inviterAvatarUrl });
+  }, []);
+
+  const handleNavigateJointAccount = useCallback((initialTab?: string) => {
+    setTransitionDirection('push');
+    setSubPage({ type: 'joint-account', initialTab });
   }, []);
 
   // Flow overlay animation state
@@ -403,6 +449,11 @@ function AppInner() {
     setSubPage({ type: 'currency', code, from: 'taxes-account', jar: 'taxes' });
   }, []);
 
+  const handleNavigateCurrencyFromJointAccount = useCallback((code: string) => {
+    setTransitionDirection('push');
+    setSubPage({ type: 'currency', code, from: 'joint-account', jar: 'joint' });
+  }, []);
+
   const handleNavigateGroupCurrencyFromHome = useCallback((code: string) => {
     setTransitionDirection('push');
     setSubPage({ type: 'currency', code, from: 'home', jar: 'taxes' });
@@ -428,14 +479,14 @@ function AppInner() {
     setSubPage({ type: 'currency', code, from: 'home' });
   }, []);
 
-  const handleNavigateAccountDetailsList = useCallback((from: 'account' | 'payments' | 'home') => {
+  const handleNavigateAccountDetailsList = useCallback((from: 'account' | 'payments' | 'home' | 'joint-account', accountCurrencyCodes?: string[]) => {
     setTransitionDirection('push');
-    setSubPage({ type: 'account-details-list', from });
+    setSubPage({ type: 'account-details-list', from, accountCurrencyCodes });
   }, []);
 
-  const handleNavigateAccountDetails = useCallback((code: string, from: 'currency' | 'account-details-list' | 'payments', jar?: 'taxes', listFrom?: 'account' | 'payments' | 'home') => {
+  const handleNavigateAccountDetails = useCallback((code: string, from: 'currency' | 'account-details-list' | 'payments', jar?: 'taxes', listFrom?: 'account' | 'payments' | 'home' | 'joint-account', listAccountCurrencyCodes?: string[]) => {
     setTransitionDirection('push');
-    setSubPage({ type: 'account-details', code, from, jar, listFrom });
+    setSubPage({ type: 'account-details', code, from, jar, listFrom, listAccountCurrencyCodes });
   }, []);
 
   const handleSubPageBack = useCallback(() => {
@@ -445,13 +496,15 @@ function AppInner() {
         const currencyFrom = subPage.listFrom === 'home' ? 'home' : 'account';
         setSubPage({ type: 'currency', code: subPage.code, from: currencyFrom as any, jar: subPage.jar });
       } else if (subPage.from === 'account-details-list') {
-        setSubPage({ type: 'account-details-list', from: subPage.listFrom ?? 'account' });
+        setSubPage({ type: 'account-details-list', from: subPage.listFrom ?? 'account', accountCurrencyCodes: subPage.listAccountCurrencyCodes });
       } else {
         setSubPage(null);
       }
     } else if (subPage?.type === 'account-details-list') {
       if (subPage.from === 'account') {
         setSubPage({ type: 'account' });
+      } else if (subPage.from === 'joint-account') {
+        setSubPage({ type: 'joint-account' });
       } else if (subPage.from === 'home') {
         setSubPage(null);
       } else {
@@ -463,6 +516,8 @@ function AppInner() {
       setSubPage({ type: 'account' });
     } else if (subPage?.type === 'currency' && subPage.from === 'taxes-account') {
       setSubPage({ type: 'taxes-account' });
+    } else if (subPage?.type === 'currency' && subPage.from === 'joint-account') {
+      setSubPage({ type: 'joint-account' });
     } else if (subPage?.type === 'currency' && subPage.from === 'jar-account' && subPage.jarId) {
       setSubPage({ type: 'jar-account', jarId: subPage.jarId });
     } else {
@@ -536,49 +591,54 @@ function AppInner() {
       }
       if (subPage.type === 'account') {
         const activeCurrencies = accountType === 'business' ? businessCurrencies : currencies;
-        return <CurrentAccount onNavigateCurrency={handleNavigateCurrencyFromAccount} onNavigateCards={() => handleNavigate('Cards')} onAccountDetails={() => handleNavigateAccountDetailsList('account')} accountType={accountType} onAdd={() => handleOpenAddMoney(activeCurrencies[0]?.code ?? 'GBP')} onConvert={() => handleOpenConvert(activeCurrencies[0]?.code ?? 'GBP', activeCurrencies[1]?.code ?? activeCurrencies[0]?.code ?? 'GBP')} onSend={() => handleOpenSend(activeCurrencies[0]?.code ?? 'GBP')} onRequest={() => handleOpenRequest(activeCurrencies[0]?.code ?? 'GBP')} onPaymentLink={() => handleOpenPaymentLink(activeCurrencies[0]?.code ?? 'GBP')} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} />;
+        return <CurrentAccount onNavigateCurrency={handleNavigateCurrencyFromAccount} onNavigateCards={() => handleNavigate('Cards')} onAccountDetails={() => handleNavigateAccountDetailsList('account')} accountType={accountType} onAdd={() => handleOpenAddMoney(activeCurrencies[0]?.code ?? 'GBP', undefined, undefined, { fromCurrency: activeCurrencies[0]?.code ?? 'GBP', toCurrency: activeCurrencies[1]?.code ?? activeCurrencies[0]?.code ?? 'GBP', accountLabel: t('home.currentAccount'), accountStyle: currentAccountStyle })} onConvert={() => handleOpenConvert(activeCurrencies[0]?.code ?? 'GBP', activeCurrencies[1]?.code ?? activeCurrencies[0]?.code ?? 'GBP')} onSend={() => handleOpenSend(activeCurrencies[0]?.code ?? 'GBP')} onRequest={() => handleOpenRequest(activeCurrencies[0]?.code ?? 'GBP')} onPaymentLink={() => handleOpenPaymentLink(activeCurrencies[0]?.code ?? 'GBP')} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} />;
       }
       if (subPage.type === 'taxes-account') {
-        return <CurrentAccount onNavigateCurrency={handleNavigateCurrencyFromGroup} onNavigateCards={() => handleNavigate('Cards')} accountType={accountType} jar="taxes" onAdd={() => handleOpenAddMoney('GBP', t('home.taxes'), taxesGroupStyle)} onConvert={() => handleOpenConvert('GBP', 'EUR', t('home.taxes'), 'taxes', t('home.currentAccount'), taxesGroupStyle, currentAccountStyle)} onSend={() => handleOpenSend('GBP', t('home.taxes'), 'taxes', undefined, undefined, undefined, taxesGroupStyle)} onRequest={() => handleOpenRequest('GBP', t('home.taxes'), 'taxes')} onPaymentLink={() => handleOpenPaymentLink('GBP', t('home.taxes'), 'taxes')} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} />;
+        return <CurrentAccount onNavigateCurrency={handleNavigateCurrencyFromGroup} onNavigateCards={() => handleNavigate('Cards')} accountType={accountType} jar="taxes" onAdd={() => handleOpenAddMoney('GBP', t('home.taxes'), taxesGroupStyle, { fromCurrency: 'GBP', toCurrency: 'EUR', accountLabel: t('home.taxes'), jar: 'taxes', toAccountLabel: t('home.currentAccount'), accountStyle: taxesGroupStyle, toAccountStyle: currentAccountStyle })} onConvert={() => handleOpenConvert('GBP', 'EUR', t('home.taxes'), 'taxes', t('home.currentAccount'), taxesGroupStyle, currentAccountStyle)} onSend={() => handleOpenSend('GBP', t('home.taxes'), 'taxes', undefined, undefined, undefined, taxesGroupStyle)} onRequest={() => handleOpenRequest('GBP', t('home.taxes'), 'taxes')} onPaymentLink={() => handleOpenPaymentLink('GBP', t('home.taxes'), 'taxes')} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} />;
+      }
+      if (subPage.type === 'joint-account') {
+        return <CurrentAccount jar="joint" initialTab={subPage.initialTab ?? 'currencies'} onNavigateCurrency={handleNavigateCurrencyFromJointAccount} onNavigateCards={() => handleNavigate('Cards')} onAccountDetails={() => handleNavigateAccountDetailsList('joint-account', ['GBP'])} accountType={accountType} onAdd={() => handleOpenAddMoney('GBP', 'Joint account', jointAccountStyle, { fromCurrency: 'GBP', toCurrency: 'EUR', accountLabel: 'Joint account', toAccountLabel: t('home.currentAccount'), accountStyle: jointAccountStyle, toAccountStyle: currentAccountStyle })} onConvert={() => handleOpenConvert('GBP', 'EUR', 'Joint account', undefined, t('home.currentAccount'), jointAccountStyle, currentAccountStyle)} onSend={() => handleOpenSend('GBP', 'Joint account', undefined, undefined, undefined, undefined, jointAccountStyle)} onRequest={() => handleOpenRequest('GBP', 'Joint account')} onPaymentLink={() => handleOpenPaymentLink('GBP', 'Joint account')} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} />;
       }
       if (subPage.type === 'jar-account') {
         const jar = getJar(subPage.jarId);
         if (!jar) return <div>Jar not found.</div>;
         const jarName = t(jar.nameKey);
-        return <CurrentAccount onNavigateCurrency={(code) => handleNavigateCurrencyFromJar(subPage.jarId, code)} accountType={accountType} jar={subPage.jarId} jarConfig={jar} onAdd={() => handleOpenAddMoney(jar.currencies[0]?.code ?? 'GBP', jarName, jarStyle(jar))} onConvert={() => handleOpenConvert(jar.currencies[0]?.code ?? 'GBP', 'EUR', jarName, undefined, t('home.currentAccount'), jarStyle(jar), currentAccountStyle, jar.id)} onSend={() => handleOpenSend(jar.currencies[0]?.code ?? 'GBP', jarName, undefined, undefined, undefined, undefined, jarStyle(jar))} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} />;
+        return <CurrentAccount onNavigateCurrency={(code) => handleNavigateCurrencyFromJar(subPage.jarId, code)} accountType={accountType} jar={subPage.jarId} jarConfig={jar} onAdd={() => handleOpenAddMoney(jar.currencies[0]?.code ?? 'GBP', jarName, jarStyle(jar), { fromCurrency: jar.currencies[0]?.code ?? 'GBP', toCurrency: 'EUR', accountLabel: jarName, toAccountLabel: t('home.currentAccount'), accountStyle: jarStyle(jar), toAccountStyle: currentAccountStyle, jarId: jar.id })} onConvert={() => handleOpenConvert(jar.currencies[0]?.code ?? 'GBP', 'EUR', jarName, undefined, t('home.currentAccount'), jarStyle(jar), currentAccountStyle, jar.id)} onSend={() => handleOpenSend(jar.currencies[0]?.code ?? 'GBP', jarName, undefined, undefined, undefined, undefined, jarStyle(jar))} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} />;
       }
       if (subPage.type === 'account-details-list') {
         const acctCurrencies = accountType === 'business' ? businessCurrencies : currencies;
-        return <AccountDetailsList accountType={accountType} onSelectCurrency={(code) => handleNavigateAccountDetails(code, 'account-details-list', undefined, subPage.from)} accountCurrencyCodes={acctCurrencies.map(c => c.code)} />;
+        const currencyCodes = subPage.accountCurrencyCodes ?? acctCurrencies.map(c => c.code);
+        return <AccountDetailsList accountType={accountType} onSelectCurrency={(code) => handleNavigateAccountDetails(code, 'account-details-list', undefined, subPage.from, subPage.accountCurrencyCodes)} accountCurrencyCodes={currencyCodes} />;
       }
       if (subPage.type === 'account-details') {
         return <AccountDetailsPage code={subPage.code} accountType={accountType} />;
       }
       if (subPage.type === 'currency') {
         const jarDef = subPage.jarId ? getJar(subPage.jarId) : undefined;
-        const currencyList = jarDef ? jarDef.currencies : subPage.jar === 'taxes' ? groupCurrencies : (accountType === 'business' ? businessCurrencies : currencies);
+        const isJointCurrency = subPage.jar === 'joint';
+        const currencyList = jarDef ? jarDef.currencies : subPage.jar === 'taxes' ? groupCurrencies : isJointCurrency ? jointAccountCurrencies : (accountType === 'business' ? businessCurrencies : currencies);
         const mainCurrencies = accountType === 'business' ? businessCurrencies : currencies;
         const sameScopeCurrency = currencyList.find((c) => c.code !== subPage.code)?.code;
         const crossAccountCurrency = mainCurrencies.find((c) => c.code !== subPage.code)?.code;
         const secondCurrency = sameScopeCurrency ?? crossAccountCurrency ?? subPage.code;
         const isCrossAccount = !sameScopeCurrency && !!crossAccountCurrency;
-        const jarLabel = jarDef ? t(jarDef.nameKey) : subPage.jar === 'taxes' ? t('home.taxes') : undefined;
+        const jarLabel = jarDef ? t(jarDef.nameKey) : subPage.jar === 'taxes' ? t('home.taxes') : isJointCurrency ? 'Joint account' : undefined;
         const isJar = !!jarDef;
         const convertToLabel = isCrossAccount ? t('home.currentAccount') : undefined;
-        const currencyAccountStyle = jarDef ? jarStyle(jarDef) : subPage.jar === 'taxes' ? taxesGroupStyle : undefined;
+        const currencyAccountStyle = jarDef ? jarStyle(jarDef) : subPage.jar === 'taxes' ? taxesGroupStyle : isJointCurrency ? jointAccountStyle : undefined;
         return (
           <CurrencyPage
             code={subPage.code}
-            onNavigateAccount={isJar ? () => handleNavigateJarAccount(subPage.jarId!) : subPage.jar === 'taxes' ? handleNavigateGroupAccount : subPage.from === 'home' ? () => { setTransitionDirection('pop'); setSubPage(null); } : handleNavigateSubAccount}
-            onAccountDetails={isJar ? undefined : () => handleNavigateAccountDetails(subPage.code, 'currency', subPage.jar, subPage.from === 'home' ? 'home' : undefined)}
+            onNavigateAccount={isJar ? () => handleNavigateJarAccount(subPage.jarId!) : subPage.jar === 'taxes' ? handleNavigateGroupAccount : isJointCurrency ? () => handleNavigateJointAccount() : subPage.from === 'home' ? () => { setTransitionDirection('pop'); setSubPage(null); } : handleNavigateSubAccount}
+            onAccountDetails={isJar ? undefined : isJointCurrency ? () => handleNavigateAccountDetailsList('joint-account', ['GBP']) : () => handleNavigateAccountDetails(subPage.code, 'currency', subPage.jar as 'taxes' | undefined, subPage.from === 'home' ? 'home' : undefined)}
             accountType={accountType}
             jar={subPage.jar}
             jarConfig={jarDef}
-            onAdd={() => handleOpenAddMoney(subPage.code, jarLabel, currencyAccountStyle)}
-            onConvert={() => handleOpenConvert(subPage.code, secondCurrency, jarLabel, subPage.jar as 'taxes' | undefined, convertToLabel, currencyAccountStyle, isCrossAccount ? currentAccountStyle : undefined, jarDef?.id)}
+            onAdd={() => handleOpenAddMoney(subPage.code, jarLabel, currencyAccountStyle, { fromCurrency: subPage.code, toCurrency: secondCurrency, accountLabel: jarLabel, toAccountLabel: convertToLabel, jar: isJointCurrency ? undefined : subPage.jar as 'taxes' | undefined, accountStyle: currencyAccountStyle, toAccountStyle: isCrossAccount ? currentAccountStyle : undefined, jarId: jarDef?.id })}
+            onConvert={() => handleOpenConvert(subPage.code, secondCurrency, jarLabel, isJointCurrency ? undefined : subPage.jar as 'taxes' | undefined, convertToLabel, currencyAccountStyle, isCrossAccount ? currentAccountStyle : undefined, jarDef?.id)}
             onSend={() => handleOpenSend(subPage.code, jarLabel, undefined, undefined, undefined, undefined, currencyAccountStyle)}
-            onRequest={isJar ? undefined : () => handleOpenRequest(subPage.code, jarLabel, subPage.jar as 'taxes' | undefined)}
-            onPaymentLink={isJar ? undefined : () => handleOpenPaymentLink(subPage.code, jarLabel, subPage.jar as 'taxes' | undefined)}
+            onRequest={isJar ? undefined : () => handleOpenRequest(subPage.code, jarLabel, isJointCurrency ? undefined : subPage.jar as 'taxes' | undefined)}
+            onPaymentLink={isJar ? undefined : () => handleOpenPaymentLink(subPage.code, jarLabel, isJointCurrency ? undefined : subPage.jar as 'taxes' | undefined)}
             moreMenuOpen={showMoreMenu}
             onMoreMenuClose={() => setShowMoreMenu(false)}
           />
@@ -604,7 +664,7 @@ function AppInner() {
           onNavigateJarAccount={handleNavigateJarAccount}
           onNavigateJarCurrency={(jarId: string, code: string) => handleNavigateJarCurrencyFromHome(jarId, code)}
           accountType={accountType}
-          onAddMoney={() => handleOpenAddMoney(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)}
+          onAddMoney={() => { const ac = accountType === 'business' ? businessCurrencies : currencies; handleOpenAddMoney(ac[0]?.code ?? 'GBP', undefined, undefined, { fromCurrency: ac[0]?.code ?? 'GBP', toCurrency: ac[1]?.code ?? ac[0]?.code ?? 'GBP', accountLabel: t('home.currentAccount'), accountStyle: currentAccountStyle }); }}
           onSend={() => handleOpenSend(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)}
           onSendWithCurrency={(sourceCurrency: string, targetCurrency: string, sourceAmount?: string, targetAmount?: string) => {
             const parseSendAmt = (s?: string) => s ? parseFloat(s.replace(/,/g, '')) || undefined : undefined;
@@ -635,6 +695,8 @@ function AppInner() {
           onOpenJointInvite={handleOpenJointInvite}
           onReviewIncomingInvite={() => handleOpenJointAccept('Sky Dog', 'https://www.tapback.co/api/avatar/sky-dog.webp')}
           onReviewPendingInvite={() => pendingJointInviteName && setActiveFlow({ type: 'joint-pending', recipientName: pendingJointInviteName })}
+          onNavigateJointAccount={() => handleNavigateJointAccount('currencies')}
+          onJointAccountDetails={() => handleNavigateAccountDetailsList('home', ['GBP'])}
         />
       );
     }
@@ -751,6 +813,14 @@ function AppInner() {
             setJointCardType(cardType);
             handleCloseFlow();
           }}
+          onViewAccount={(cardType) => {
+            setHasIncomingInvite(false);
+            setJointAccountAccepted(true);
+            setJointCardType(cardType);
+            handleCloseFlow();
+            setTransitionDirection('push');
+            setSubPage({ type: 'joint-account', initialTab: 'options' });
+          }}
           onDecline={() => {
             setHasIncomingInvite(false);
             handleCloseFlow();
@@ -783,6 +853,35 @@ function AppInner() {
           <PrototypeSettings />
         </div>
       )}
+
+      <BottomSheet
+        open={!!addMoneySourceSheet}
+        onClose={() => setAddMoneySourceSheet(null)}
+        title={t('addMoney.sourceTitle')}
+      >
+        {addMoneySourceSheet && (
+          <>
+            <ListItem
+              title={t('addMoney.externalAccount')}
+              media={
+                <ListItem.AvatarView size={48} style={{ backgroundColor: 'var(--color-background-neutral)', border: 'none' }}>
+                  <Bank size={24} />
+                </ListItem.AvatarView>
+              }
+              control={<ListItem.Navigation onClick={() => handleAddMoneyFromSource(addMoneySourceSheet, 'external')} />}
+            />
+            <ListItem
+              title={t('addMoney.wiseAccount')}
+              media={
+                <ListItem.AvatarView size={48} style={{ backgroundColor: 'var(--color-background-neutral)', border: 'none' }}>
+                  <Receive size={24} />
+                </ListItem.AvatarView>
+              }
+              control={<ListItem.Navigation onClick={() => handleAddMoneyFromSource(addMoneySourceSheet, 'wise')} />}
+            />
+          </>
+        )}
+      </BottomSheet>
 
       {activeNavItem !== 'Insights' && activeNavItem !== 'Transactions' && activeNavItem !== 'Account' && !subPage && <MobileNav ref={mobileNavRef} activeItem={activeNavItem} onSelect={handleNavigate} />}
       <PrototypeSettings />

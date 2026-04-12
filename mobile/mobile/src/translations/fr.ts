@@ -98,8 +98,10 @@ const fr: Translations = {
   'settings.jointScenario1bSub': 'Sky Dog a envoyé une invitation. L\'utilisateur accepte.',
   'settings.jointScenarioPending': 'Scénario — Invitation en attente',
   'settings.jointScenarioPendingSub': 'Invitation envoyée à Sky Dog, en attente d\'acceptation.',
-  'settings.jointScenarioAccepted': 'Scénario — Compte actif',
-  'settings.jointScenarioAcceptedSub': 'Compte joint déjà configuré. Les deux cartes émises.',
+  'settings.jointScenarioAcceptedPhysical': 'Scénario — Actif (carte physique)',
+  'settings.jointScenarioAcceptedPhysicalSub': 'Compte joint configuré. Carte physique commandée.',
+  'settings.jointScenarioAcceptedDigital': 'Scénario — Actif (carte digitale)',
+  'settings.jointScenarioAcceptedDigitalSub': 'Compte joint configuré. Carte digitale émise.',
   'settings.jointReset': 'Réinitialiser l\'état du compte joint',
 
   // Total Balance Header
@@ -416,6 +418,17 @@ const fr: Translations = {
   'addMoney.amount': 'Montant',
   'addMoney.verification': 'Vérification',
   'addMoney.payment': 'Paiement',
+  'addMoney.sourceTitle': 'D\'où ajoutez-vous de l\'argent\u00A0?',
+  'addMoney.externalAccount': 'Un compte externe',
+  'addMoney.wiseAccount': 'Votre compte Wise',
+  'addMoney.change': 'Modifier',
+  'addMoney.payingIn': 'Devise de paiement',
+  'addMoney.payingWith': 'Moyen de paiement',
+  'addMoney.arrives': 'Arrive',
+  'addMoney.youPay': 'Vous payez',
+  'addMoney.bankTransfer': 'Virement bancaire',
+  'addMoney.todayInSeconds': 'Aujourd\'hui - en quelques secondes',
+  'addMoney.noFees': 'Total - sans frais',
 
   // Convert Flow
   'convert.from': 'De',

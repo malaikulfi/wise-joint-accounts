@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Button, ExpressiveMoneyInput } from '@transferwise/components';
-import { InfoCircle, ChevronDown, Money, Savings, Suitcase } from '@transferwise/icons';
+import { Button, ExpressiveMoneyInput, ListItem } from '@transferwise/components';
+import { InfoCircle, ChevronDown, ChevronRight, Money, Savings, Suitcase, Bank, LightningBolt, Receipt } from '@transferwise/icons';
 import { Flag } from '@wise/art';
 import { FlowHeader } from '../components/FlowHeader';
 import { ButtonCue } from '../components/ButtonCue';
 import { useLanguage } from '../context/Language';
 import type { AccountType } from '../App';
+import { currencies } from '@shared/data/currencies';
+import { businessCurrencies } from '@shared/data/business-currencies';
 
 function WiseLogoIcon() {
   return (
@@ -30,6 +32,11 @@ function resolveIcon(iconName: string) {
   }
 }
 
+function getCurrencyName(code: string): string {
+  const allCurrencies = [...currencies, ...businessCurrencies];
+  return allCurrencies.find((c) => c.code === code)?.name ?? code;
+}
+
 type Props = {
   defaultCurrency: string;
   accountLabel: string;
@@ -42,13 +49,13 @@ type Props = {
 
 export function AddMoneyFlow({ defaultCurrency, accountLabel, accountStyle, onClose, accountType, avatarUrl, initials }: Props) {
   const { t } = useLanguage();
+  const [step, setStep] = useState<'amount' | 'details'>('amount');
   const [amount, setAmount] = useState<number | null>(null);
   const [cueVisible, setCueVisible] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [buttonState, setButtonState] = useState<ButtonState>('disabled');
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const isBusiness = accountType === 'business';
   const accountAvatarStyle = { backgroundColor: accountStyle.color, color: accountStyle.textColor };
   const accountAvatarIcon = resolveIcon(accountStyle.iconName);
 
@@ -83,9 +90,8 @@ export function AddMoneyFlow({ defaultCurrency, accountLabel, accountStyle, onCl
     };
   }, []);
 
-  // Delay focus so the user sees the inactive→active transition,
-  // then show the cue after the input animation completes
   useEffect(() => {
+    if (step !== 'amount') return;
     const focusTimer = setTimeout(() => {
       const input = bodyRef.current?.querySelector<HTMLInputElement>('.wds-expressive-money-input input');
       input?.focus();
@@ -99,57 +105,151 @@ export function AddMoneyFlow({ defaultCurrency, accountLabel, accountStyle, onCl
       clearTimeout(focusTimer);
       clearTimeout(cueTimer);
     };
-  }, []);
+  }, [step]);
+
+  const formattedAmount = amount != null
+    ? `${amount.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${defaultCurrency}`
+    : `0 ${defaultCurrency}`;
+  const currencyName = getCurrencyName(defaultCurrency);
+
+  const neutralStyle = { backgroundColor: 'var(--color-background-neutral)', border: 'none' };
 
   return (
     <div className="add-money-flow">
       <FlowHeader onClose={onClose} />
 
       <div className="add-money-flow__body" ref={bodyRef}>
-        <ExpressiveMoneyInput
-          label={<span style={{ whiteSpace: 'nowrap' }}>{t('addMoney.title')} <strong>{accountLabel}</strong></span>}
-          currency={defaultCurrency}
-          amount={amount}
-          onAmountChange={handleAmountChange}
-          currencySelector={{
-            customRender: ({ id, labelId }) => (
-              <div id={id} aria-labelledby={labelId} className="wds-expressive-money-input-currency-selector">
-                <Button v2 size="md" priority="secondary-neutral" className="wds-currency-selector"
-                  addonStart={{ type: 'avatar', value: [{ style: accountAvatarStyle, asset: accountAvatarIcon }, { asset: <Flag code={defaultCurrency} loading="eager" /> }] }}
-                  addonEnd={{ type: 'icon', value: <ChevronDown size={16} /> }}
-                >
-                  {defaultCurrency}
-                </Button>
-              </div>
-            ),
-          }}
-          showChevron={!inputFocused && !amount}
-          onFocusChange={setInputFocused}
-        />
+        {step === 'amount' && (
+          <ExpressiveMoneyInput
+            label={<span style={{ whiteSpace: 'nowrap' }}>{t('addMoney.title')} <strong>{accountLabel}</strong></span>}
+            currency={defaultCurrency}
+            amount={amount}
+            onAmountChange={handleAmountChange}
+            currencySelector={{
+              customRender: ({ id, labelId }) => (
+                <div id={id} aria-labelledby={labelId} className="wds-expressive-money-input-currency-selector">
+                  <Button v2 size="md" priority="secondary-neutral" className="wds-currency-selector"
+                    addonStart={{ type: 'avatar', value: [{ style: accountAvatarStyle, asset: accountAvatarIcon }, { asset: <Flag code={defaultCurrency} loading="eager" /> }] }}
+                    addonEnd={{ type: 'icon', value: <ChevronDown size={16} /> }}
+                  >
+                    {defaultCurrency}
+                  </Button>
+                </div>
+              ),
+            }}
+            showChevron={!inputFocused && !amount}
+            onFocusChange={setInputFocused}
+          />
+        )}
 
-        <div className="add-money-flow__continue">
-          <ButtonCue
-            visible={cueVisible && buttonState === 'disabled'}
-            hint={
-              <>
-                <InfoCircle size={16} />
-                <span className="np-text-body-default">{t('addMoney.enterAmount')}</span>
-              </>
-            }
-          >
-            <Button
-              v2
-              size="lg"
-              priority="primary"
-              disabled={buttonState !== 'active'}
-              loading={buttonState === 'loading'}
-              className={buttonState === 'loading' ? 'add-money-flow__btn-loading' : undefined}
-              block
+        {step === 'details' && (
+          <div className="add-money-flow__amount-compact">
+            <span className="np-text-body-small add-money-flow__amount-compact-label">
+              {t('addMoney.title')} <strong>{accountLabel}</strong>
+            </span>
+            <div className="add-money-flow__amount-compact-row">
+              <Button v2 size="md" priority="secondary-neutral"
+                addonStart={{ type: 'avatar', value: [{ style: accountAvatarStyle, asset: accountAvatarIcon }, { asset: <Flag code={defaultCurrency} loading="eager" /> }] }}
+                addonEnd={{ type: 'icon', value: <ChevronDown size={16} /> }}
+              >
+                {defaultCurrency}
+              </Button>
+              <span className="add-money-flow__amount-compact-value">{formattedAmount}</span>
+            </div>
+          </div>
+        )}
+
+        {step === 'amount' && (
+          <div className="add-money-flow__continue">
+            <ButtonCue
+              visible={cueVisible && buttonState === 'disabled'}
+              hint={
+                <>
+                  <InfoCircle size={16} />
+                  <span className="np-text-body-default">{t('addMoney.enterAmount')}</span>
+                </>
+              }
             >
-              {t('addMoney.continue')}
-            </Button>
-          </ButtonCue>
-        </div>
+              <Button
+                v2
+                size="lg"
+                priority="primary"
+                disabled={buttonState !== 'active'}
+                loading={buttonState === 'loading'}
+                className={buttonState === 'loading' ? 'add-money-flow__btn-loading' : undefined}
+                block
+                onClick={() => setStep('details')}
+              >
+                {t('addMoney.continue')}
+              </Button>
+            </ButtonCue>
+          </div>
+        )}
+
+        {step === 'details' && (
+          <>
+            <div className="add-money-flow__details-divider" />
+
+            <div className="add-money-flow__details">
+              <ListItem
+                title={<span className="np-text-body-small" style={{ color: 'var(--color-content-secondary)' }}>{t('addMoney.payingIn')}</span>}
+                subtitle={<span className="np-text-body-default" style={{ fontWeight: 600, color: 'var(--color-content-primary)' }}>{currencyName}</span>}
+                media={
+                  <ListItem.AvatarView size={48} style={{ border: 'none', overflow: 'hidden' }}>
+                    <Flag code={defaultCurrency} loading="eager" />
+                  </ListItem.AvatarView>
+                }
+                control={
+                  <Button v2 size="sm" priority="secondary">{t('addMoney.change')}</Button>
+                }
+              />
+              <ListItem
+                title={<span className="np-text-body-small" style={{ color: 'var(--color-content-secondary)' }}>{t('addMoney.payingWith')}</span>}
+                subtitle={<span className="np-text-body-default" style={{ fontWeight: 600, color: 'var(--color-content-primary)' }}>{t('addMoney.bankTransfer')}</span>}
+                media={
+                  <ListItem.AvatarView size={48} style={neutralStyle}>
+                    <Bank size={24} />
+                  </ListItem.AvatarView>
+                }
+                control={
+                  <Button v2 size="sm" priority="secondary">{t('addMoney.change')}</Button>
+                }
+              />
+              <ListItem
+                title={<span className="np-text-body-small" style={{ color: 'var(--color-content-secondary)' }}>{t('addMoney.arrives')}</span>}
+                subtitle={<span className="np-text-body-default" style={{ fontWeight: 600, color: 'var(--color-sentiment-positive)' }}>{t('addMoney.todayInSeconds')}</span>}
+                media={
+                  <ListItem.AvatarView size={48} style={neutralStyle}>
+                    <LightningBolt size={24} />
+                  </ListItem.AvatarView>
+                }
+              />
+              <ListItem
+                title={<span className="np-text-body-small" style={{ color: 'var(--color-content-secondary)' }}>{t('addMoney.youPay')}</span>}
+                subtitle={<span className="np-text-body-default" style={{ fontWeight: 600, color: 'var(--color-content-primary)' }}>{t('addMoney.noFees')}</span>}
+                media={
+                  <ListItem.AvatarView size={48} style={neutralStyle}>
+                    <Receipt size={24} />
+                  </ListItem.AvatarView>
+                }
+                control={
+                  <button type="button" className="add-money-flow__detail-amount-btn" onClick={() => {}}>
+                    <span className="np-text-body-default" style={{ fontWeight: 600 }}>{formattedAmount}</span>
+                    <ChevronRight size={16} />
+                  </button>
+                }
+              />
+            </div>
+
+            <div style={{ height: 104 }} />
+
+            <div className="add-money-flow__continue">
+              <Button v2 size="lg" priority="primary" block onClick={onClose}>
+                {t('addMoney.continue')}
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

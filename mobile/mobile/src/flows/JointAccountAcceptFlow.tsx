@@ -1,7 +1,21 @@
-import { useState } from 'react';
+import { useState, Component } from 'react';
+import type { ReactNode } from 'react';
 import { Button, Select } from '@transferwise/components';
+import { Illustration, Illustration3D } from '@wise/art';
 import { FlowHeader } from '../components/FlowHeader';
 import type { AccountType } from '../App';
+
+class IllustrationErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) return <Illustration name="check-mark" size="large" alt="" />;
+    return this.props.children;
+  }
+}
 
 const cardGreenUrl = new URL('../assets/card-green.jpg', import.meta.url).href;
 const cardTapestryUrl = new URL('../assets/card-tapestry.jpg', import.meta.url).href;
@@ -23,7 +37,7 @@ const DIGITAL_VARIANTS = [
 
 type DigitalVariantId = typeof DIGITAL_VARIANTS[number]['id'];
 
-type Screen = 'pitch' | 'card-type' | 'address' | 'delivery' | 'name-on-card' | 'pin' | 'pin-confirm' | 'review' | 'confirm' | 'digital-customise';
+type Screen = 'pitch' | 'card-type' | 'address' | 'delivery' | 'name-on-card' | 'pin' | 'pin-confirm' | 'review' | 'confirm' | 'digital-customise' | 'success';
 
 type Props = {
   inviterName: string;
@@ -31,6 +45,7 @@ type Props = {
   userAvatarUrl: string;
   onClose: () => void;
   onAccept?: (cardType: 'digital' | 'physical') => void;
+  onViewAccount?: (cardType: 'digital' | 'physical') => void;
   onDecline?: () => void;
   onStepChange?: (step: string) => void;
   accountType: AccountType;
@@ -102,7 +117,7 @@ function Numpad({ onPress, onDelete }: { onPress: (digit: string) => void; onDel
   );
 }
 
-export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, userAvatarUrl, onClose, onAccept, onDecline, onStepChange, accountType: _accountType }: Props) {
+export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, userAvatarUrl, onClose, onAccept, onViewAccount, onDecline, onStepChange, accountType: _accountType }: Props) {
   const [screen, setScreen] = useState<Screen>('pitch');
   const [cardType, setCardType] = useState<'digital' | 'physical' | null>(null);
   const [address1, setAddress1] = useState('123 big house');
@@ -133,6 +148,62 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, userAvat
     onStepChange?.(newScreen);
   };
 
+  const handleSuccess = (type: 'digital' | 'physical') => {
+    setCardType(type);
+    handleScreenChange('success');
+  };
+
+
+  // ── SUCCESS ───────────────────────────────────────────────────────────────
+  if (screen === 'success') {
+    const isDigital = cardType === 'digital';
+    return (
+      <div className="joint-accept card-success--dark">
+        <div className="card-success__header">
+          <button className="card-success__close" onClick={() => onAccept?.(cardType!)} type="button" aria-label="Close">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+          <button className="card-success__skip-btn" onClick={() => onViewAccount?.(cardType!)} type="button">Skip</button>
+        </div>
+
+        <div className="card-success__body">
+          <h1 className="np-display np-text-display-medium card-success__title">
+            {isDigital ? 'YOUR CARD IS READY' : <>YOUR CARD HAS<br />BEEN ORDERED</>}
+          </h1>
+          <p className="np-text-body-large card-success__subtitle">
+            {isDigital
+              ? 'Start spending online and in-store with Apple pay'
+              : 'It should arrive in the next few days. Start spending online and in-store with Apple pay'}
+          </p>
+        </div>
+
+        <div className="card-success__hero">
+          <IllustrationErrorBoundary>
+            <Illustration3D name="check-mark" size="large" />
+          </IllustrationErrorBoundary>
+        </div>
+
+        <div className="card-success__footer">
+          <button
+            className={`card-success__wallet-btn${isDigital ? '' : ' card-success__wallet-btn--light'}`}
+            onClick={() => onAccept?.(cardType!)}
+            type="button"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="2" y="5" width="20" height="14" rx="3" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M2 10h20" stroke="currentColor" strokeWidth="1.5"/>
+            </svg>
+            Add to Apple Wallet
+          </button>
+          <button className="card-success__view-link" onClick={() => onViewAccount?.(cardType!)} type="button">
+            View joint account
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ── CONFIRM ORDER ─────────────────────────────────────────────────────────
   if (screen === 'confirm') {
@@ -203,7 +274,7 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, userAvat
           </div>
         </div>
         <div className="joint-accept__footer">
-          <button className="card-confirm__applepay-btn" onClick={() => onAccept?.('physical')} type="button">
+          <button className="card-confirm__applepay-btn" onClick={() => handleSuccess('physical')} type="button">
             <span className="card-confirm__applepay-apple"></span>
             <span>Pay</span>
           </button>
@@ -575,7 +646,7 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, userAvat
           <button
             className="digital-customise__confirm-btn"
             type="button"
-            onClick={() => onAccept?.('digital')}
+            onClick={() => handleSuccess('digital')}
           >
             Confirm
           </button>

@@ -96,8 +96,10 @@ const en = {
   'settings.jointScenario1bSub': 'Sky Dog has sent an invite. User accepts.',
   'settings.jointScenarioPending': 'Scenario — Invite pending',
   'settings.jointScenarioPendingSub': 'Invite sent to Sky Dog, waiting for acceptance.',
-  'settings.jointScenarioAccepted': 'Scenario — Account active',
-  'settings.jointScenarioAcceptedSub': 'Joint account already set up. Both cards issued.',
+  'settings.jointScenarioAcceptedPhysical': 'Scenario — Active (physical card)',
+  'settings.jointScenarioAcceptedPhysicalSub': 'Joint account set up. Physical card ordered.',
+  'settings.jointScenarioAcceptedDigital': 'Scenario — Active (digital card)',
+  'settings.jointScenarioAcceptedDigitalSub': 'Joint account set up. Digital card issued.',
   'settings.jointReset': 'Reset all joint account state',
 
   // Total Balance Header
@@ -414,6 +416,17 @@ const en = {
   'addMoney.amount': 'Amount',
   'addMoney.verification': 'Verification',
   'addMoney.payment': 'Payment',
+  'addMoney.sourceTitle': 'Where are you adding money from?',
+  'addMoney.externalAccount': 'An external account',
+  'addMoney.wiseAccount': 'Your Wise account',
+  'addMoney.change': 'Change',
+  'addMoney.payingIn': 'Paying in',
+  'addMoney.payingWith': 'Paying with',
+  'addMoney.arrives': 'Arrives',
+  'addMoney.youPay': 'You pay',
+  'addMoney.bankTransfer': 'Bank transfer',
+  'addMoney.todayInSeconds': 'Today - in seconds',
+  'addMoney.noFees': 'Total - no fees to pay',
 
   // Convert Flow
   'convert.from': 'From',

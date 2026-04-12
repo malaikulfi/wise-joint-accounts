@@ -14,6 +14,7 @@ import { useLanguage, useTxLabels } from '../context/Language';
 import { convertToHomeCurrency, usdBaseRates } from '@shared/data/currency-rates';
 
 import { groupCurrencies, groupTransactions } from '@shared/data/taxes-data';
+import { jointAccountCurrencies, jointAccountTransactions } from '@shared/data/joint-account-data';
 import type { JarDefinition } from '@shared/data/jar-data';
 
 type Props = {
@@ -23,6 +24,7 @@ type Props = {
   accountType?: AccountType;
   jar?: string;
   jarConfig?: JarDefinition;
+  initialTab?: string;
   onAdd?: () => void;
   onConvert?: () => void;
   onSend?: () => void;
@@ -238,32 +240,35 @@ function SidebarContent({ onNavigateCards, accountType = 'personal', jar, accoun
   );
 }
 
-export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountDetails, accountType = 'personal', jar, jarConfig, onAdd, onConvert, onSend, onRequest, onPaymentLink, moreMenuOpen, onMoreMenuClose }: Props) {
+export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountDetails, accountType = 'personal', jar, jarConfig, initialTab, onAdd, onConvert, onSend, onRequest, onPaymentLink, moreMenuOpen, onMoreMenuClose }: Props) {
   const { consumerName, businessName } = usePrototypeNames();
   const { t } = useLanguage();
   const txLabels = useTxLabels();
-  const [activeTab, setActiveTab] = useState('currencies');
+  const [activeTab, setActiveTab] = useState(initialTab ?? 'currencies');
 
   const personalTransactions = useMemo(() => buildTransactions(consumerName, businessName, txLabels), [consumerName, businessName, txLabels]);
   const businessTransactions = useMemo(() => buildBusinessTransactions(consumerName, txLabels), [consumerName, txLabels]);
 
   const rates = usdBaseRates;
   const isGroup = jar === 'taxes';
+  const isJoint = jar === 'joint';
   const isJar = !!jarConfig;
-  const activeCurrencies = isJar ? jarConfig.currencies : isGroup ? groupCurrencies : (accountType === 'business' ? businessCurrencies : currencies);
-  const activeTransactions = isJar ? jarConfig.transactions : isGroup ? groupTransactions : (accountType === 'business' ? businessTransactions : personalTransactions);
+  const activeCurrencies = isJoint ? jointAccountCurrencies : isJar ? jarConfig.currencies : isGroup ? groupCurrencies : (accountType === 'business' ? businessCurrencies : currencies);
+  const activeTransactions = isJoint ? jointAccountTransactions : isJar ? jarConfig.transactions : isGroup ? groupTransactions : (accountType === 'business' ? businessTransactions : personalTransactions);
   const displayCode = activeCurrencies[0]?.code ?? 'GBP';
   const activeTotal = activeCurrencies.reduce((sum, c) => sum + convertToHomeCurrency(c.balance, c.code, displayCode, rates), 0);
   const balanceFormatted = `${activeTotal.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${displayCode}`;
-  const accountLabel = isJar ? t(jarConfig.nameKey) : isGroup ? t('home.taxes') : t('home.currentAccount');
+  const accountLabel = isJoint ? 'Joint account' : isJar ? t(jarConfig.nameKey) : isGroup ? t('home.taxes') : t('home.currentAccount');
 
-  const menuItems = isJar
-    ? [{ label: t('currentAccount.editJar'), icon: <Edit size={24} /> }, { label: t('common.statementsAndReports'), icon: <Document size={24} /> }, { label: t('currentAccount.closeJar'), icon: <CrossCircle size={24} /> }]
-    : isGroup
-      ? [{ label: t('currentAccount.editGroup'), icon: <Edit size={24} /> }, { label: t('common.statementsAndReports'), icon: <Document size={24} /> }, { label: t('currentAccount.closeGroup'), icon: <CrossCircle size={24} /> }]
-      : [{ label: t('currentAccount.editCurrentAccount'), icon: <Edit size={24} /> }, { label: t('common.statementsAndReports'), icon: <Document size={24} /> }];
+  const menuItems = isJoint
+    ? [{ label: t('common.statementsAndReports'), icon: <Document size={24} /> }, { label: t('currentAccount.closeGroup'), icon: <CrossCircle size={24} /> }]
+    : isJar
+      ? [{ label: t('currentAccount.editJar'), icon: <Edit size={24} /> }, { label: t('common.statementsAndReports'), icon: <Document size={24} /> }, { label: t('currentAccount.closeJar'), icon: <CrossCircle size={24} /> }]
+      : isGroup
+        ? [{ label: t('currentAccount.editGroup'), icon: <Edit size={24} /> }, { label: t('common.statementsAndReports'), icon: <Document size={24} /> }, { label: t('currentAccount.closeGroup'), icon: <CrossCircle size={24} /> }]
+        : [{ label: t('currentAccount.editCurrentAccount'), icon: <Edit size={24} /> }, { label: t('common.statementsAndReports'), icon: <Document size={24} /> }];
 
-  const headerType = isJar ? 'jar' as const : isGroup ? 'taxes' as const : 'account' as const;
+  const headerType = isJar ? 'jar' as const : (isGroup || isJoint) ? 'taxes' as const : 'account' as const;
   const jarIcon = isJar ? (jarConfig.iconName === 'Suitcase' ? <Suitcase size={16} /> : <Savings size={16} />) : undefined;
 
   return (
@@ -305,7 +310,7 @@ export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountD
           />
         </div>
 
-        {activeTab === 'currencies' && <CurrenciesSection onNavigateCurrency={onNavigateCurrency} activeCurrencies={activeCurrencies} isGroup={isGroup && !isJar} />}
+        {activeTab === 'currencies' && <CurrenciesSection onNavigateCurrency={onNavigateCurrency} activeCurrencies={activeCurrencies} isGroup={(isGroup || isJoint) && !isJar} />}
         {activeTab === 'transactions' && <TransactionsSection activeTransactions={activeTransactions} />}
         {activeTab === 'options' && !isJar && <SidebarContent onNavigateCards={onNavigateCards} accountType={accountType} jar={jar} accountLabel={accountLabel} />}
       </div>

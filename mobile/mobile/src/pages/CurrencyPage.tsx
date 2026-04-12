@@ -13,6 +13,7 @@ import { usePrototypeNames } from '../context/PrototypeNames';
 import { useLanguage, useTxLabels } from '../context/Language';
 
 import { groupCurrencies, groupTransactions } from '@shared/data/taxes-data';
+import { jointAccountCurrencies, jointAccountTransactions } from '@shared/data/joint-account-data';
 import type { JarDefinition } from '@shared/data/jar-data';
 
 type Props = {
@@ -278,9 +279,10 @@ export function CurrencyPage({ code, onNavigateAccount, onAccountDetails, accoun
   const personalTransactions = useMemo(() => buildTransactions(consumerName, businessName, txLabels), [consumerName, businessName, txLabels]);
   const businessTransactions = useMemo(() => buildBusinessTransactions(consumerName, txLabels), [consumerName, txLabels]);
   const isGroup = jar === 'taxes';
+  const isJoint = jar === 'joint';
   const isJar = !!jarConfig;
-  const activeCurrencies = isJar ? jarConfig.currencies : isGroup ? groupCurrencies : (accountType === 'business' ? businessCurrencies : currencies);
-  const activeTxList = isJar ? jarConfig.transactions : isGroup ? groupTransactions : (accountType === 'business' ? businessTransactions : personalTransactions);
+  const activeCurrencies = isJar ? jarConfig.currencies : isGroup ? groupCurrencies : isJoint ? jointAccountCurrencies : (accountType === 'business' ? businessCurrencies : currencies);
+  const activeTxList = isJar ? jarConfig.transactions : isGroup ? groupTransactions : isJoint ? jointAccountTransactions : (accountType === 'business' ? businessTransactions : personalTransactions);
   const currency = activeCurrencies.find((c) => c.code === code);
 
   const interestReturns = useMemo(() => {
@@ -321,8 +323,8 @@ export function CurrencyPage({ code, onNavigateAccount, onAccountDetails, accoun
         onAccountDetailsClick={(isJar || isGroup) ? undefined : onAccountDetails}
         onBreadcrumbClick={onNavigateAccount}
         accountType={accountType}
-        jarColor={isJar ? jarConfig.color : isGroup ? '#FFEB69' : undefined}
-        jarName={isJar ? t(jarConfig.nameKey) : isGroup ? t('home.taxes') : undefined}
+        jarColor={isJar ? jarConfig.color : isGroup ? '#FFEB69' : isJoint ? '#9fe870' : undefined}
+        jarName={isJar ? t(jarConfig.nameKey) : isGroup ? t('home.taxes') : isJoint ? 'Joint account' : undefined}
         jarIcon={jarIcon ? jarIcon : isGroup ? <Money size={16} /> : undefined}
         hideGetPaid={isJar}
         sendSecondary={currency.balance === 0}

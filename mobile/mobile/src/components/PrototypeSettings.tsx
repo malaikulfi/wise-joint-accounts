@@ -290,7 +290,7 @@ import { useLiquidGlass } from '../hooks/useLiquidGlass';
 export function PrototypeSettings() {
   const { isScreenModeDark, setScreenMode } = useTheme();
   const createSnackbar = useSnackbar();
-  const { consumerName, setConsumerName, businessName, setBusinessName, consumerHomeCurrency, setConsumerHomeCurrency, businessHomeCurrency, setBusinessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted, setJointCardType } = usePrototypeNames();
+  const { consumerName, setConsumerName, businessName, setBusinessName, consumerHomeCurrency, setConsumerHomeCurrency, businessHomeCurrency, setBusinessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted, jointCardType, setJointCardType } = usePrototypeNames();
   const { language, setLanguage, t } = useLanguage();
 
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -642,7 +642,7 @@ export function PrototypeSettings() {
                   : pendingJointInviteName
                   ? `Active: invite pending (${pendingJointInviteName})`
                   : jointAccountAccepted
-                  ? 'Active: joint account set up'
+                  ? `Active: joint account set up (${jointCardType ?? 'physical'} card)`
                   : 'No scenario active'}
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -687,14 +687,27 @@ export function PrototypeSettings() {
                 />
                 <ListItem
                   media={<ListItem.AvatarView size={40} style={{ background: '#163300', border: 'none', color: '#9fe870' }}><People size={24} /></ListItem.AvatarView>}
-                  title={<span className="np-text-body-default" style={{ fontWeight: 600 }}>{t('settings.jointScenarioAccepted')}</span>}
-                  subtitle={t('settings.jointScenarioAcceptedSub')}
+                  title={<span className="np-text-body-default" style={{ fontWeight: 600 }}>{t('settings.jointScenarioAcceptedPhysical')}</span>}
+                  subtitle={t('settings.jointScenarioAcceptedPhysicalSub')}
                   control={
                     <Button v2 priority="secondary-neutral" size="sm" onClick={() => {
                       setHasIncomingInvite(false);
                       setPendingJointInviteName(null);
                       setJointAccountAccepted(true);
                       setJointCardType('physical');
+                    }}>Set</Button>
+                  }
+                />
+                <ListItem
+                  media={<ListItem.AvatarView size={40} style={{ background: '#163300', border: 'none', color: '#9fe870' }}><People size={24} /></ListItem.AvatarView>}
+                  title={<span className="np-text-body-default" style={{ fontWeight: 600 }}>{t('settings.jointScenarioAcceptedDigital')}</span>}
+                  subtitle={t('settings.jointScenarioAcceptedDigitalSub')}
+                  control={
+                    <Button v2 priority="secondary-neutral" size="sm" onClick={() => {
+                      setHasIncomingInvite(false);
+                      setPendingJointInviteName(null);
+                      setJointAccountAccepted(true);
+                      setJointCardType('digital');
                     }}>Set</Button>
                   }
                 />

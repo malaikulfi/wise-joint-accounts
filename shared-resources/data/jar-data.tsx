@@ -9,6 +9,7 @@ export const GROUP_IDS = {
   taxes: '73850214',
   savings: '61724089',
   supplies: '39058162',
+  joint: '92847561',
 } as const;
 
 export type JarDefinition = {
