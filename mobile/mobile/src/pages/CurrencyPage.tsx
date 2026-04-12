@@ -30,6 +30,8 @@ type Props = {
   onPaymentLink?: () => void;
   moreMenuOpen?: boolean;
   onMoreMenuClose?: () => void;
+  balanceAdjustment?: number;
+  txList?: Transaction[];
 };
 
 function TransactionsSection({ currency, txList }: { currency: CurrencyData; txList?: Transaction[] }) {
@@ -271,7 +273,7 @@ function Sidebar({ currency, accountType = 'personal', interestReturns, isJar = 
   );
 }
 
-export function CurrencyPage({ code, onNavigateAccount, onAccountDetails, accountType = 'personal', jar, jarConfig, onAdd, onConvert, onSend, onRequest, onPaymentLink, moreMenuOpen, onMoreMenuClose }: Props) {
+export function CurrencyPage({ code, onNavigateAccount, onAccountDetails, accountType = 'personal', jar, jarConfig, onAdd, onConvert, onSend, onRequest, onPaymentLink, moreMenuOpen, onMoreMenuClose, balanceAdjustment = 0, txList }: Props) {
   const { t } = useLanguage();
   const txLabels = useTxLabels();
   const { consumerName, businessName } = usePrototypeNames();
@@ -282,8 +284,9 @@ export function CurrencyPage({ code, onNavigateAccount, onAccountDetails, accoun
   const isJoint = jar === 'joint';
   const isJar = !!jarConfig;
   const activeCurrencies = isJar ? jarConfig.currencies : isGroup ? groupCurrencies : isJoint ? jointAccountCurrencies : (accountType === 'business' ? businessCurrencies : currencies);
-  const activeTxList = isJar ? jarConfig.transactions : isGroup ? groupTransactions : isJoint ? jointAccountTransactions : (accountType === 'business' ? businessTransactions : personalTransactions);
+  const activeTxList = isJar ? jarConfig.transactions : isGroup ? groupTransactions : isJoint ? (txList ?? jointAccountTransactions) : (accountType === 'business' ? businessTransactions : personalTransactions);
   const currency = activeCurrencies.find((c) => c.code === code);
+  const effectiveCurrency = (isJoint && balanceAdjustment && currency) ? { ...currency, balance: currency.balance + balanceAdjustment } : currency;
 
   const interestReturns = useMemo(() => {
     const interestTxs = activeTxList.filter((tx) => tx.name === 'Wise Interest' && tx.isPositive && tx.currency === currency?.code);
@@ -315,7 +318,7 @@ export function CurrencyPage({ code, onNavigateAccount, onAccountDetails, accoun
         type="currency"
         currencyCode={currency.code}
         label={currency.code}
-        balance={formatBalance(currency)}
+        balance={formatBalance(effectiveCurrency ?? currency)}
         accountDetails={(isJar || isGroup) ? undefined : currency.accountDetails}
         menuItems={menuItems}
         moreMenuOpen={moreMenuOpen}
@@ -327,7 +330,7 @@ export function CurrencyPage({ code, onNavigateAccount, onAccountDetails, accoun
         jarName={isJar ? t(jarConfig.nameKey) : isGroup ? t('home.taxes') : isJoint ? 'Joint account' : undefined}
         jarIcon={jarIcon ? jarIcon : isGroup ? <Money size={16} /> : undefined}
         hideGetPaid={isJar}
-        sendSecondary={currency.balance === 0}
+        sendSecondary={(effectiveCurrency ?? currency).balance === 0}
         onAdd={onAdd}
         onConvert={onConvert}
         onSend={onSend}

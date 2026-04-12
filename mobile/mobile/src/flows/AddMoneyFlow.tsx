@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button, ExpressiveMoneyInput, ListItem } from '@transferwise/components';
-import { InfoCircle, ChevronDown, ChevronRight, Money, Savings, Suitcase, Bank, LightningBolt, Receipt } from '@transferwise/icons';
-import { Flag } from '@wise/art';
-import { FlowHeader } from '../components/FlowHeader';
+import { InfoCircle, ChevronDown, ChevronRight, Money, Savings, Suitcase, Bank, LightningBolt, Receipt, Cross } from '@transferwise/icons';
+import { Flag, Illustration } from '@wise/art';
+import { FlowHeader, GlassCircle } from '../components/FlowHeader';
 import { ButtonCue } from '../components/ButtonCue';
+import { CurrencyAccountPicker, type PickerAccount } from '../components/CurrencyAccountPicker';
 import { useLanguage } from '../context/Language';
 import type { AccountType } from '../App';
 import { currencies } from '@shared/data/currencies';
@@ -42,22 +43,28 @@ type Props = {
   accountLabel: string;
   accountStyle: AccountStyle;
   onClose: () => void;
+  onSuccess?: (amount: number) => void;
   accountType: AccountType;
   avatarUrl: string;
   initials: string;
+  pickerAccounts?: PickerAccount[];
 };
 
-export function AddMoneyFlow({ defaultCurrency, accountLabel, accountStyle, onClose, accountType, avatarUrl, initials }: Props) {
+export function AddMoneyFlow({ defaultCurrency, accountLabel, accountStyle, onClose, onSuccess, accountType, avatarUrl, initials, pickerAccounts }: Props) {
   const { t } = useLanguage();
-  const [step, setStep] = useState<'amount' | 'details'>('amount');
+  const [step, setStep] = useState<'amount' | 'details' | 'success'>('amount');
   const [amount, setAmount] = useState<number | null>(null);
   const [cueVisible, setCueVisible] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [buttonState, setButtonState] = useState<ButtonState>('disabled');
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState(defaultCurrency);
+  const [selectedAccountLabel, setSelectedAccountLabel] = useState(accountLabel);
+  const [selectedAccountStyle, setSelectedAccountStyle] = useState<AccountStyle>(accountStyle);
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const accountAvatarStyle = { backgroundColor: accountStyle.color, color: accountStyle.textColor };
-  const accountAvatarIcon = resolveIcon(accountStyle.iconName);
+  const accountAvatarStyle = { backgroundColor: selectedAccountStyle.color, color: selectedAccountStyle.textColor };
+  const accountAvatarIcon = resolveIcon(selectedAccountStyle.iconName);
 
   const bodyRef = useRef<HTMLDivElement>(null);
   const amountRef = useRef(amount);
@@ -107,12 +114,45 @@ export function AddMoneyFlow({ defaultCurrency, accountLabel, accountStyle, onCl
     };
   }, [step]);
 
+  const handlePickerSelect = useCallback((code: string, label: string, style: AccountStyle) => {
+    setSelectedCurrency(code);
+    setSelectedAccountLabel(label);
+    setSelectedAccountStyle(style);
+    setPickerOpen(false);
+  }, []);
+
   const formattedAmount = amount != null
-    ? `${amount.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${defaultCurrency}`
-    : `0 ${defaultCurrency}`;
-  const currencyName = getCurrencyName(defaultCurrency);
+    ? `${amount.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${selectedCurrency}`
+    : `0 ${selectedCurrency}`;
+  const currencyName = getCurrencyName(selectedCurrency);
 
   const neutralStyle = { backgroundColor: 'var(--color-background-neutral)', border: 'none' };
+
+  if (step === 'success') {
+    return (
+      <div className="add-money-flow" style={{ background: '#163300', padding: '56px 24px 44px', overflow: 'hidden' }}>
+        <div className="add-money-success__header">
+          <GlassCircle onClick={onClose} ariaLabel="Close">
+            <span className="ios-glass-btn__icon"><Cross size={24} /></span>
+          </GlassCircle>
+        </div>
+        <div className="add-money-success__content">
+          <div className="add-money-success__illustration">
+            <Illustration name="confetti" size="large" />
+          </div>
+          <h1 className="add-money-success__title">{t('addMoney.successTitle')}</h1>
+          <p className="add-money-success__subtitle">
+            {t('addMoney.successSubtitle', { amount: formattedAmount, account: accountLabel })}
+          </p>
+        </div>
+        <div className="add-money-success__footer">
+          <Button v2 size="lg" priority="primary" block onClick={() => { onSuccess?.(amount ?? 0); onClose(); }}>
+            {t('addMoney.gotIt')}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="add-money-flow">
@@ -121,18 +161,19 @@ export function AddMoneyFlow({ defaultCurrency, accountLabel, accountStyle, onCl
       <div className="add-money-flow__body" ref={bodyRef}>
         {step === 'amount' && (
           <ExpressiveMoneyInput
-            label={<span style={{ whiteSpace: 'nowrap' }}>{t('addMoney.title')} <strong>{accountLabel}</strong></span>}
-            currency={defaultCurrency}
+            label={<span style={{ whiteSpace: 'nowrap' }}>{t('addMoney.title')} <strong>{selectedAccountLabel}</strong></span>}
+            currency={selectedCurrency}
             amount={amount}
             onAmountChange={handleAmountChange}
             currencySelector={{
               customRender: ({ id, labelId }) => (
                 <div id={id} aria-labelledby={labelId} className="wds-expressive-money-input-currency-selector">
                   <Button v2 size="md" priority="secondary-neutral" className="wds-currency-selector"
-                    addonStart={{ type: 'avatar', value: [{ style: accountAvatarStyle, asset: accountAvatarIcon }, { asset: <Flag code={defaultCurrency} loading="eager" /> }] }}
+                    addonStart={{ type: 'avatar', value: [{ style: accountAvatarStyle, asset: accountAvatarIcon }, { asset: <Flag code={selectedCurrency} loading="eager" /> }] }}
                     addonEnd={{ type: 'icon', value: <ChevronDown size={16} /> }}
+                    onClick={pickerAccounts ? () => setPickerOpen(true) : undefined}
                   >
-                    {defaultCurrency}
+                    {selectedCurrency}
                   </Button>
                 </div>
               ),
@@ -145,14 +186,15 @@ export function AddMoneyFlow({ defaultCurrency, accountLabel, accountStyle, onCl
         {step === 'details' && (
           <div className="add-money-flow__amount-compact">
             <span className="np-text-body-small add-money-flow__amount-compact-label">
-              {t('addMoney.title')} <strong>{accountLabel}</strong>
+              {t('addMoney.title')} <strong>{selectedAccountLabel}</strong>
             </span>
             <div className="add-money-flow__amount-compact-row">
               <Button v2 size="md" priority="secondary-neutral"
-                addonStart={{ type: 'avatar', value: [{ style: accountAvatarStyle, asset: accountAvatarIcon }, { asset: <Flag code={defaultCurrency} loading="eager" /> }] }}
+                addonStart={{ type: 'avatar', value: [{ style: accountAvatarStyle, asset: accountAvatarIcon }, { asset: <Flag code={selectedCurrency} loading="eager" /> }] }}
                 addonEnd={{ type: 'icon', value: <ChevronDown size={16} /> }}
+                onClick={pickerAccounts ? () => setPickerOpen(true) : undefined}
               >
-                {defaultCurrency}
+                {selectedCurrency}
               </Button>
               <span className="add-money-flow__amount-compact-value">{formattedAmount}</span>
             </div>
@@ -195,8 +237,8 @@ export function AddMoneyFlow({ defaultCurrency, accountLabel, accountStyle, onCl
                 title={<span className="np-text-body-small" style={{ color: 'var(--color-content-secondary)' }}>{t('addMoney.payingIn')}</span>}
                 subtitle={<span className="np-text-body-default" style={{ fontWeight: 600, color: 'var(--color-content-primary)' }}>{currencyName}</span>}
                 media={
-                  <ListItem.AvatarView size={48} style={{ border: 'none', overflow: 'hidden' }}>
-                    <Flag code={defaultCurrency} loading="eager" />
+                  <ListItem.AvatarView size={48} style={{ border: 'none' }}>
+                    <Flag code={selectedCurrency} loading="eager" />
                   </ListItem.AvatarView>
                 }
                 control={
@@ -241,16 +283,27 @@ export function AddMoneyFlow({ defaultCurrency, accountLabel, accountStyle, onCl
               />
             </div>
 
-            <div style={{ height: 104 }} />
+            <div style={{ height: 72 }} />
 
             <div className="add-money-flow__continue">
-              <Button v2 size="lg" priority="primary" block onClick={onClose}>
+              <Button v2 size="lg" priority="primary" block onClick={() => setStep('success')}>
                 {t('addMoney.continue')}
               </Button>
             </div>
           </>
         )}
       </div>
+
+      {pickerAccounts && (
+        <CurrencyAccountPicker
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          title={t('addMoney.title')}
+          accounts={pickerAccounts}
+          selectedCode={selectedCurrency}
+          onSelect={handlePickerSelect}
+        />
+      )}
     </div>
   );
 }

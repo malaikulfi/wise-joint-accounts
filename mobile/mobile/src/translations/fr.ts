@@ -429,13 +429,16 @@ const fr: Translations = {
   'addMoney.bankTransfer': 'Virement bancaire',
   'addMoney.todayInSeconds': 'Aujourd\'hui - en quelques secondes',
   'addMoney.noFees': 'Total - sans frais',
+  'addMoney.successTitle': 'C\'est fait',
+  'addMoney.successSubtitle': '{amount} ont été ajoutés à votre {account}. Simple comme bonjour.',
+  'addMoney.gotIt': 'Compris',
 
   // Convert Flow
   'convert.from': 'De',
   'convert.to': 'Vers',
   'convert.available': 'Disponible\u00A0: {amount}',
   'convert.enterAmount': 'Saisissez l\'un ou l\'autre montant pour continuer',
-  'convert.review': 'V\u00E9rifier',
+  'convert.confirm': 'Confirmer',
   'convert.rate': '1 {from} = {rate} {to}',
   'convert.autoConvert': 'Configurer une conversion automatique',
   'convert.autoConvertSub': 'Nous convertirons votre argent lorsqu\'il atteindra votre taux de change cible.',
@@ -463,6 +466,13 @@ const fr: Translations = {
   'send.amount': 'Montant',
   'send.review': 'V\u00E9rifier',
   'send.pay': 'Payer',
+  'send.confirm': 'Confirmer',
+  'send.recurringPayment': 'Paiement récurrent',
+  'send.recurringMonthly': 'Mensuel · 28 du mois',
+  'send.recurringOff': 'Désactivé',
+  'send.successTitle': 'Paiement envoyé !',
+  'send.scheduledFrom': 'depuis {account}',
+  'send.scheduledMonthly': 'Mensuel à partir du 28',
 
   // Request Flow
   'request.whoRequestingFrom': 'À qui demandez-vous?',

@@ -5,7 +5,7 @@ import { Illustration } from '@wise/art';
 import type { AccountType } from '../App';
 import { currencies } from '@shared/data/currencies';
 import { businessCurrencies } from '@shared/data/business-currencies';
-import { buildTransactions } from '@shared/data/transactions';
+import { buildTransactions, type Transaction } from '@shared/data/transactions';
 import { buildBusinessTransactions } from '@shared/data/business-transactions';
 import { usePrototypeNames } from '../context/PrototypeNames';
 import { useLanguage, useTxLabels } from '../context/Language';
@@ -82,7 +82,7 @@ const GROUP_BALANCE = groupTotalBalance;
 
 type SendAgainRecipient = { name: string; subtitle: string; avatarUrl?: string; hasFastFlag: boolean; badgeFlagCode?: string };
 
-export function Home({ onNavigate, onNavigateAccount, onNavigateCurrency, onNavigateGroupAccount, onNavigateGroupCurrency, onNavigateJarAccount, onNavigateJarCurrency, accountType = 'personal', onAddMoney, onSend, onSendWithCurrency, onSendAgain, onRequest, onPaymentLink, onAccountDetails, pendingJointInviteName, hasIncomingInvite, jointAccountAccepted, jointCardType, onOpenJointInvite, onReviewIncomingInvite, onReviewPendingInvite, onNavigateJointAccount, onJointAccountDetails }: { onNavigate?: (page: string, push?: boolean) => void; onNavigateAccount?: () => void; onNavigateCurrency?: (code: string) => void; onNavigateGroupAccount?: () => void; onNavigateGroupCurrency?: (code: string) => void; onNavigateJarAccount?: (jarId: string) => void; onNavigateJarCurrency?: (jarId: string, code: string) => void; accountType?: AccountType; onAddMoney?: () => void; onSend?: () => void; onSendWithCurrency?: (sourceCurrency: string, targetCurrency: string, sourceAmount?: string, targetAmount?: string) => void; onSendAgain?: (recipient: SendAgainRecipient, amount?: string) => void; onRequest?: () => void; onPaymentLink?: () => void; onAccountDetails?: () => void; pendingJointInviteName?: string | null; hasIncomingInvite?: boolean; jointAccountAccepted?: boolean; jointCardType?: 'digital' | 'physical' | null; onOpenJointInvite?: () => void; onReviewIncomingInvite?: () => void; onReviewPendingInvite?: () => void; onNavigateJointAccount?: () => void; onJointAccountDetails?: () => void }) {
+export function Home({ onNavigate, onNavigateAccount, onNavigateCurrency, onNavigateGroupAccount, onNavigateGroupCurrency, onNavigateJarAccount, onNavigateJarCurrency, accountType = 'personal', onAddMoney, onSend, onSendWithCurrency, onSendAgain, onRequest, onPaymentLink, onAccountDetails, pendingJointInviteName, hasIncomingInvite, jointAccountAccepted, jointCardType, onOpenJointInvite, onReviewIncomingInvite, onReviewPendingInvite, onNavigateJointAccount, onJointAccountDetails, onNavigateJointCurrency, jointBalanceAdjustment, jointTransactions }: { onNavigate?: (page: string, push?: boolean) => void; onNavigateAccount?: () => void; onNavigateCurrency?: (code: string) => void; onNavigateGroupAccount?: () => void; onNavigateGroupCurrency?: (code: string) => void; onNavigateJarAccount?: (jarId: string) => void; onNavigateJarCurrency?: (jarId: string, code: string) => void; accountType?: AccountType; onAddMoney?: () => void; onSend?: () => void; onSendWithCurrency?: (sourceCurrency: string, targetCurrency: string, sourceAmount?: string, targetAmount?: string) => void; onSendAgain?: (recipient: SendAgainRecipient, amount?: string) => void; onRequest?: () => void; onPaymentLink?: () => void; onAccountDetails?: () => void; pendingJointInviteName?: string | null; hasIncomingInvite?: boolean; jointAccountAccepted?: boolean; jointCardType?: 'digital' | 'physical' | null; onOpenJointInvite?: () => void; onReviewIncomingInvite?: () => void; onReviewPendingInvite?: () => void; onNavigateJointAccount?: () => void; onJointAccountDetails?: () => void; onNavigateJointCurrency?: (code: string) => void; jointBalanceAdjustment?: number; jointTransactions?: Transaction[] }) {
   const { consumerName, businessName, consumerHomeCurrency, businessHomeCurrency } = usePrototypeNames();
   const { t } = useLanguage();
   const txLabels = useTxLabels();
@@ -100,7 +100,7 @@ export function Home({ onNavigate, onNavigateAccount, onNavigateCurrency, onNavi
   const currentAccountInDisplayCurrency = activeCurrencies.reduce((sum, c) => sum + convertToHomeCurrency(c.balance, c.code, accountDisplayCode, rates), 0);
   const currentAccountFormatted = currentAccountInDisplayCurrency.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   // TotalBalanceHeader: single source of truth via computeTotalBalance (includes all accounts + jars + groups)
-  const totalBalance = computeTotalBalance(accountType, homeCurrency, rates);
+  const totalBalance = computeTotalBalance(accountType, homeCurrency, rates) + convertToHomeCurrency(jointBalanceAdjustment ?? 0, 'GBP', homeCurrency, rates);
   const totalBalanceFormatted = totalBalance.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const handleSeeAllTransactions = () => {
@@ -199,14 +199,14 @@ export function Home({ onNavigate, onNavigateAccount, onNavigateCurrency, onNavi
             return (
               <MultiCurrencyAccountCard
                 title="Joint account"
-                totalAmount="£0.00"
+                totalAmount={`£${(jointBalanceAdjustment ?? 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 currencyCount={1}
-                balances={[{ code: 'GBP', amount: '£0.00' }]}
+                balances={[{ code: 'GBP', amount: `£${(jointBalanceAdjustment ?? 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` }]}
                 hasCards={true}
                 cardCount={1}
                 onNavigateCards={onNavigate ? () => onNavigate('Cards') : undefined}
                 onNavigateAccount={onNavigateJointAccount}
-                onNavigateCurrency={() => {}}
+                onNavigateCurrency={onNavigateJointCurrency}
                 cardTopImage={jointCardImg}
                 cardBottomImage={jointCardImg}
                 cardInfoLight={isDigital}
@@ -272,7 +272,7 @@ export function Home({ onNavigate, onNavigateAccount, onNavigateCurrency, onNavi
           <Button v2 size="sm" priority="tertiary" onClick={handleSeeAllTransactions}>{t('common.seeAll')}</Button>
         </div>
         <ul className={`wds-list list-unstyled m-y-0 transactions-list${isBusiness ? ' home__tx-list--business' : ''}`}>
-          {activeTransactions.slice(0, 3).map((tx, i) => (
+          {[...(jointTransactions ?? []), ...activeTransactions].slice(0, 3).map((tx, i) => (
             <ActivitySummary
               key={i}
               icon={tx.icon}

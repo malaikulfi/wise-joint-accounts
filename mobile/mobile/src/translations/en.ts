@@ -427,13 +427,16 @@ const en = {
   'addMoney.bankTransfer': 'Bank transfer',
   'addMoney.todayInSeconds': 'Today - in seconds',
   'addMoney.noFees': 'Total - no fees to pay',
+  'addMoney.successTitle': 'All done',
+  'addMoney.successSubtitle': 'That\'s {amount} added to your {account}. Just like that.',
+  'addMoney.gotIt': 'Got it',
 
   // Convert Flow
   'convert.from': 'From',
   'convert.to': 'To',
   'convert.available': 'Available: {amount}',
   'convert.enterAmount': 'Enter either amount to continue',
-  'convert.review': 'Review',
+  'convert.confirm': 'Confirm',
   'convert.rate': '1 {from} = {rate} {to}',
   'convert.autoConvert': 'Set up an auto conversion',
   'convert.autoConvertSub': 'We\'ll convert your money when it reaches your target exchange rate.',
@@ -461,6 +464,13 @@ const en = {
   'send.amount': 'Amount',
   'send.review': 'Review',
   'send.pay': 'Pay',
+  'send.confirm': 'Confirm',
+  'send.recurringPayment': 'Recurring payment',
+  'send.recurringMonthly': 'Monthly · 28th of the month',
+  'send.recurringOff': 'Off',
+  'send.successTitle': 'Payment sent!',
+  'send.scheduledFrom': 'from {account}',
+  'send.scheduledMonthly': 'Monthly from 28th',
 
   // Request Flow
   'request.whoRequestingFrom': 'Who are you requesting from?',

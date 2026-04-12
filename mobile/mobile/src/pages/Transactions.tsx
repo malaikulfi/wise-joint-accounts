@@ -104,14 +104,15 @@ function TransactionsTableView({ transactions }: { transactions: Transaction[] }
   );
 }
 
-export function Transactions({ accountType = 'personal' }: { accountType?: AccountType }) {
+export function Transactions({ accountType = 'personal', jointTransactions }: { accountType?: AccountType; jointTransactions?: Transaction[] }) {
   const { consumerName, businessName } = usePrototypeNames();
   const { t } = useLanguage();
   const txLabels = useTxLabels();
   const isBusiness = accountType === 'business';
   const personalTransactions = useMemo(() => buildTransactions(consumerName, businessName, txLabels), [consumerName, businessName, txLabels]);
   const businessTransactions = useMemo(() => buildBusinessTransactions(consumerName, txLabels), [consumerName, txLabels]);
-  const transactions = isBusiness ? businessTransactions : personalTransactions;
+  const baseTransactions = isBusiness ? businessTransactions : personalTransactions;
+  const transactions = jointTransactions?.length ? [...jointTransactions, ...baseTransactions] : baseTransactions;
   const [search, setSearch] = useState('');
   const [selectedChips, setSelectedChips] = useState<string[]>([]);
   const [backToTopVisible, setBackToTopVisible] = useState(false);

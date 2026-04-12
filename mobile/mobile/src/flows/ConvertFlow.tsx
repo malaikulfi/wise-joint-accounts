@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button, ExpressiveMoneyInput, ListItem } from '@transferwise/components';
-import { InfoCircle, ChevronDown, ChevronRight, SwitchVertical, AutoConvert, Money, Savings, Suitcase } from '@transferwise/icons';
-import { Flag } from '@wise/art';
-import { FlowHeader, GlassPill } from '../components/FlowHeader';
+import { InfoCircle, ChevronDown, ChevronRight, SwitchVertical, AutoConvert, Money, Savings, Suitcase, Cross } from '@transferwise/icons';
+import { Flag, Illustration } from '@wise/art';
+import { FlowHeader, GlassPill, GlassCircle } from '../components/FlowHeader';
 import { ButtonCue } from '../components/ButtonCue';
+import { CurrencyAccountPicker, type PickerAccount } from '../components/CurrencyAccountPicker';
 import { useLanguage } from '../context/Language';
 import { useLiveRates } from '../context/LiveRates';
 import { convertToHomeCurrency } from '@shared/data/currency-rates';
-import { formatBalance } from '@shared/data/balances';
 import { currencies } from '@shared/data/currencies';
 import { businessCurrencies } from '@shared/data/business-currencies';
 import { groupCurrencies } from '@shared/data/taxes-data';
@@ -45,15 +45,18 @@ type Props = {
   accountStyle: AccountStyle;
   toAccountStyle?: AccountStyle;
   onClose: () => void;
+  onSuccess?: (fromAmount: number, fromCurrency: string, fromAccountLabel: string, toAmount: number, toCurrency: string, toAccountLabel: string) => void;
   accountType: AccountType;
   avatarUrl: string;
   initials: string;
+  pickerAccounts?: PickerAccount[];
 };
 
-export function ConvertFlow({ fromCurrency: initFrom, toCurrency: initTo, accountLabel, toAccountLabel, jar, jarId, accountStyle, toAccountStyle, onClose, accountType, avatarUrl, initials }: Props) {
+export function ConvertFlow({ fromCurrency: initFrom, toCurrency: initTo, accountLabel, toAccountLabel, jar, jarId, accountStyle, toAccountStyle, onClose, onSuccess, accountType, avatarUrl, initials, pickerAccounts }: Props) {
   const { t } = useLanguage();
   const rates = useLiveRates();
 
+  const [step, setStep] = useState<'convert' | 'success'>('convert');
   const [fromCurrency, setFromCurrency] = useState(initFrom);
   const [toCurrency, setToCurrency] = useState(initTo);
   const [fromAmount, setFromAmount] = useState<number | null>(null);
@@ -64,30 +67,34 @@ export function ConvertFlow({ fromCurrency: initFrom, toCurrency: initTo, accoun
   const [toFocused, setToFocused] = useState(false);
   const [buttonState, setButtonState] = useState<ButtonState>('disabled');
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [openPicker, setOpenPicker] = useState<'from' | 'to' | null>(null);
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isBusiness = accountType === 'business';
   const isGroup = jar === 'taxes';
 
-  // Track swap state so labels and avatar styles follow currency positions
-  const [labelsSwapped, setLabelsSwapped] = useState(false);
-  const fromLabel = labelsSwapped ? (toAccountLabel ?? accountLabel) : accountLabel;
-  const toLabel = labelsSwapped ? accountLabel : (toAccountLabel ?? accountLabel);
-
-  // Account avatar styles — driven entirely by props
+  // Per-side account style and label — updated independently on swap or picker selection
   const resolvedToStyle = toAccountStyle ?? accountStyle;
-  const fromStyle = labelsSwapped ? resolvedToStyle : accountStyle;
-  const toStyle = labelsSwapped ? accountStyle : resolvedToStyle;
-  const fromAvatarStyle = { backgroundColor: fromStyle.color, color: fromStyle.textColor };
-  const fromAvatarIcon = resolveIcon(fromStyle.iconName);
-  const toAvatarStyle = { backgroundColor: toStyle.color, color: toStyle.textColor };
-  const toAvatarIcon = resolveIcon(toStyle.iconName);
+  const [currentFromStyle, setCurrentFromStyle] = useState<AccountStyle>(accountStyle);
+  const [currentToStyle, setCurrentToStyle] = useState<AccountStyle>(resolvedToStyle);
+  const [currentFromLabel, setCurrentFromLabel] = useState(accountLabel);
+  const [currentToLabel, setCurrentToLabel] = useState(toAccountLabel ?? accountLabel);
 
-  // Find the balance for the "from" currency — search the active account's currencies
+  const fromAvatarStyle = { backgroundColor: currentFromStyle.color, color: currentFromStyle.textColor };
+  const fromAvatarIcon = resolveIcon(currentFromStyle.iconName);
+  const toAvatarStyle = { backgroundColor: currentToStyle.color, color: currentToStyle.textColor };
+  const toAvatarIcon = resolveIcon(currentToStyle.iconName);
+
+  // Find the balance for the "from" currency
   const jarDef = jarId ? getJar(jarId) : undefined;
-  const fromAccountCurrencies = jarDef ? jarDef.currencies : isGroup ? groupCurrencies : (isBusiness ? businessCurrencies : currencies);
-  const fromCurrencyData = fromAccountCurrencies.find((c) => c.code === fromCurrency);
-  const availableBalance = fromCurrencyData ? formatBalance(fromCurrencyData) : `0.00 ${fromCurrency}`;
+  const fallbackFromCurrencies = jarDef ? jarDef.currencies : isGroup ? groupCurrencies : (isBusiness ? businessCurrencies : currencies);
+  const fromCurrencyData = pickerAccounts
+    ? (pickerAccounts.find(a => a.label === currentFromLabel)?.currencies.find(c => c.code === fromCurrency)
+        ?? pickerAccounts.flatMap(a => a.currencies).find(c => c.code === fromCurrency))
+    : fallbackFromCurrencies.find(c => c.code === fromCurrency);
+  const availableBalance = fromCurrencyData
+    ? `${fromCurrencyData.symbol}${fromCurrencyData.balance.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : `0.00 ${fromCurrency}`;
 
   // Compute exchange rate for the rate pill
   const rateValue = convertToHomeCurrency(1, fromCurrency, toCurrency, rates);
@@ -140,13 +147,39 @@ export function ConvertFlow({ fromCurrency: initFrom, toCurrency: initTo, accoun
   const handleSwap = useCallback(() => {
     setFromCurrency(toCurrency);
     setToCurrency(fromCurrency);
-    setLabelsSwapped((prev) => !prev);
+    setCurrentFromStyle(currentToStyle);
+    setCurrentToStyle(currentFromStyle);
+    setCurrentFromLabel(currentToLabel);
+    setCurrentToLabel(currentFromLabel);
     if (activeInput === 'from' && fromAmount !== null && fromAmount !== 0) {
       setToAmount(Math.round(convertToHomeCurrency(fromAmount, toCurrency, fromCurrency, rates) * 100) / 100);
     } else if (activeInput === 'to' && toAmount !== null && toAmount !== 0) {
       setFromAmount(Math.round(convertToHomeCurrency(toAmount, fromCurrency, toCurrency, rates) * 100) / 100);
     }
-  }, [fromCurrency, toCurrency, fromAmount, toAmount, activeInput, rates]);
+  }, [fromCurrency, toCurrency, fromAmount, toAmount, activeInput, rates, currentFromStyle, currentToStyle, currentFromLabel, currentToLabel]);
+
+  const handlePickerSelect = useCallback((code: string, label: string, style: AccountStyle) => {
+    if (openPicker === 'from') {
+      setFromCurrency(code);
+      setCurrentFromStyle(style);
+      setCurrentFromLabel(label);
+      if (toAmount !== null && toAmount !== 0) {
+        setFromAmount(Math.round(convertToHomeCurrency(toAmount, toCurrency, code, rates) * 100) / 100);
+      } else if (fromAmount !== null && fromAmount !== 0) {
+        setToAmount(Math.round(convertToHomeCurrency(fromAmount, code, toCurrency, rates) * 100) / 100);
+      }
+    } else if (openPicker === 'to') {
+      setToCurrency(code);
+      setCurrentToStyle(style);
+      setCurrentToLabel(label);
+      if (fromAmount !== null && fromAmount !== 0) {
+        setToAmount(Math.round(convertToHomeCurrency(fromAmount, fromCurrency, code, rates) * 100) / 100);
+      } else if (toAmount !== null && toAmount !== 0) {
+        setFromAmount(Math.round(convertToHomeCurrency(toAmount, code, fromCurrency, rates) * 100) / 100);
+      }
+    }
+    setOpenPicker(null);
+  }, [openPicker, fromCurrency, toCurrency, fromAmount, toAmount, rates]);
 
   useEffect(() => {
     return () => {
@@ -171,8 +204,51 @@ export function ConvertFlow({ fromCurrency: initFrom, toCurrency: initTo, accoun
     };
   }, []);
 
+  const handleConfirm = useCallback(() => {
+    if (fromAmount !== null && toAmount !== null) {
+      onSuccess?.(fromAmount, fromCurrency, currentFromLabel, toAmount, toCurrency, currentToLabel);
+      setStep('success');
+    }
+  }, [fromAmount, toAmount, fromCurrency, toCurrency, currentFromLabel, currentToLabel, onSuccess]);
+
   // Dividers expand when either input is focused, collapse when neither is
   const dividersExpanded = fromFocused || toFocused;
+
+  if (step === 'success') {
+    const fmtFrom = fromAmount?.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00';
+    const fmtTo = toAmount?.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00';
+    return (
+      <div className="convert-flow" style={{ background: '#163300', padding: '56px 24px 44px', overflow: 'hidden' }}>
+        <div className="add-money-success__header">
+          <GlassCircle onClick={onClose} ariaLabel="Close">
+            <span className="ios-glass-btn__icon"><Cross size={24} /></span>
+          </GlassCircle>
+        </div>
+        <div className="add-money-success__content">
+          <div className="add-money-success__illustration">
+            <Illustration name="confetti" size="large" />
+          </div>
+          <h1 className="add-money-success__title">{t('addMoney.successTitle')}</h1>
+          <div className="convert-success__rows">
+            <div className="convert-success__row">
+              <span className="convert-success__amount convert-success__amount--from">-{fmtFrom} {fromCurrency}</span>
+              <span className="convert-success__label">from {currentFromLabel}</span>
+            </div>
+            <div className="convert-success__arrow">↓</div>
+            <div className="convert-success__row">
+              <span className="convert-success__amount convert-success__amount--to">+{fmtTo} {toCurrency}</span>
+              <span className="convert-success__label">to {currentToLabel}</span>
+            </div>
+          </div>
+        </div>
+        <div className="add-money-success__footer">
+          <Button v2 size="lg" priority="primary" block onClick={onClose}>
+            {t('addMoney.gotIt')}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="convert-flow">
@@ -203,7 +279,7 @@ export function ConvertFlow({ fromCurrency: initFrom, toCurrency: initTo, accoun
         {/* From section */}
         <div className="convert-flow__from-input">
           <ExpressiveMoneyInput
-            label={<span style={{ whiteSpace: 'nowrap' }}>{t('convert.from')} <strong>{fromLabel}</strong></span>}
+            label={<span style={{ whiteSpace: 'nowrap' }}>{t('convert.from')} <strong>{currentFromLabel}</strong></span>}
             currency={fromCurrency}
             amount={fromAmount}
             onAmountChange={handleFromAmountChange}
@@ -213,6 +289,7 @@ export function ConvertFlow({ fromCurrency: initFrom, toCurrency: initTo, accoun
                   <Button v2 size="md" priority="secondary-neutral" className="wds-currency-selector"
                     addonStart={{ type: 'avatar', value: [{ style: fromAvatarStyle, asset: fromAvatarIcon }, { asset: <Flag code={fromCurrency} loading="eager" /> }] }}
                     addonEnd={{ type: 'icon', value: <ChevronDown size={16} /> }}
+                    onClick={pickerAccounts ? () => setOpenPicker('from') : undefined}
                   >
                     {fromCurrency}
                   </Button>
@@ -244,7 +321,7 @@ export function ConvertFlow({ fromCurrency: initFrom, toCurrency: initTo, accoun
         {/* To section */}
         <div className="convert-flow__to-input">
           <ExpressiveMoneyInput
-            label={<span style={{ whiteSpace: 'nowrap' }}>{t('convert.to')} <strong>{toLabel}</strong></span>}
+            label={<span style={{ whiteSpace: 'nowrap' }}>{t('convert.to')} <strong>{currentToLabel}</strong></span>}
             currency={toCurrency}
             amount={toAmount}
             onAmountChange={handleToAmountChange}
@@ -254,6 +331,7 @@ export function ConvertFlow({ fromCurrency: initFrom, toCurrency: initTo, accoun
                   <Button v2 size="md" priority="secondary-neutral" className="wds-currency-selector"
                     addonStart={{ type: 'avatar', value: [{ style: toAvatarStyle, asset: toAvatarIcon }, { asset: <Flag code={toCurrency} loading="eager" /> }] }}
                     addonEnd={{ type: 'icon', value: <ChevronDown size={16} /> }}
+                    onClick={pickerAccounts ? () => setOpenPicker('to') : undefined}
                   >
                     {toCurrency}
                   </Button>
@@ -307,12 +385,35 @@ export function ConvertFlow({ fromCurrency: initFrom, toCurrency: initTo, accoun
               loading={buttonState === 'loading'}
               className={buttonState === 'loading' ? 'convert-flow__btn-loading' : undefined}
               block
+              onClick={handleConfirm}
             >
-              {t('convert.review')}
+              {t('convert.confirm')}
             </Button>
           </ButtonCue>
         </div>
       </div>
+
+      {pickerAccounts && (
+        <>
+          <CurrencyAccountPicker
+            open={openPicker === 'from'}
+            onClose={() => setOpenPicker(null)}
+            title={t('convert.from')}
+            accounts={pickerAccounts}
+            selectedCode={fromCurrency}
+            onSelect={handlePickerSelect}
+          />
+          <CurrencyAccountPicker
+            open={openPicker === 'to'}
+            onClose={() => setOpenPicker(null)}
+            title={t('convert.to')}
+            accounts={pickerAccounts}
+            selectedCode={toCurrency}
+            onSelect={handlePickerSelect}
+          />
+        </>
+      )}
+
     </div>
   );
 }

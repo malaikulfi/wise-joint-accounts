@@ -1,6 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import { Button, ExpressiveMoneyInput, Chips, ListItem } from '@transferwise/components';
-import { InfoCircle, ChevronDown, ChevronRight, Search, Plus, CameraSparkle, Savings, Suitcase } from '@transferwise/icons';
+import { InfoCircle, ChevronDown, ChevronRight, Search, Plus, CameraSparkle, Send, Document, Cross } from '@transferwise/icons';
+import { Illustration } from '@wise/art';
 import { Flag } from '@wise/art';
 import { FlowHeader, GlassPill, GlassCircle } from '../components/FlowHeader';
 import { ButtonCue } from '../components/ButtonCue';
@@ -46,6 +47,7 @@ type Props = {
   accountStyle: AccountStyle;
   onClose: () => void;
   onStepChange?: (step: string) => void;
+  onSuccess?: (amount: number, currency: string, recipientName: string, isRecurring: boolean) => void;
   accountType: AccountType;
   avatarUrl: string;
   initials: string;
@@ -57,7 +59,23 @@ type Props = {
   forceClose?: boolean;
 };
 
-export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onClose, onStepChange, accountType, avatarUrl, initials, recipient: initialRecipient, prefillAmount, prefillReceiveAmount, startStep = 'recipient', forcedReceiveCurrency, forceClose }: Props) {
+// Helper constants and functions
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const formatScheduleDate = (d: Date) => `${DAY_NAMES[d.getDay()]}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
+const formatScheduleDateShort = (d: Date) => `${DAY_NAMES[d.getDay()]}, ${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`;
+const buildCalendarCells = (year: number, month: number): (number | null)[] => {
+  const firstDow = new Date(year, month, 1).getDay();
+  const monStart = firstDow === 0 ? 6 : firstDow - 1;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells: (number | null)[] = Array(monStart).fill(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+  return cells;
+};
+const TODAY = new Date(2026, 3, 12); // April 12 2026
+
+export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onClose, onStepChange, onSuccess, accountType, avatarUrl, initials, recipient: initialRecipient, prefillAmount, prefillReceiveAmount, startStep = 'recipient', forcedReceiveCurrency, forceClose }: Props) {
   const { t } = useLanguage();
   const { consumerName } = usePrototypeNames();
   const rates = useLiveRates();
@@ -65,7 +83,7 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
   const isBusiness = accountType === 'business';
   const isGroup = jar === 'taxes';
 
-  const [step, setStep] = useState<'recipient' | 'amount'>(initialRecipient ? 'amount' : startStep);
+  const [step, setStep] = useState<'recipient' | 'amount' | 'schedule' | 'confirm' | 'success'>(initialRecipient ? 'amount' : startStep);
   const [selectedRecipient, setSelectedRecipient] = useState<RecipientInfo | null>(initialRecipient ?? null);
   const [currency, setCurrency] = useState(initialRecipient?.badgeFlagCode ?? defaultCurrency);
   const [sendCurrency, setSendCurrency] = useState(defaultCurrency);
@@ -91,6 +109,18 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
   const crossTopRef = useRef<HTMLDivElement>(null);
   const slideWrapperRef = useRef<HTMLDivElement>(null);
   const slideAnimRef = useRef<Animation | null>(null);
+  // Snapshot of confirm data — written once in handleConfirm so success screen never loses its data
+  const successDataRef = useRef<{ amount: number; currency: string; recipientName: string; scheduleDate: Date | null; scheduleRepeats: string } | null>(null);
+
+  // Schedule state
+  const [scheduleDate, setScheduleDate] = useState<Date | null>(null);
+  const [scheduleRepeats, setScheduleRepeats] = useState<'never' | 'weekly' | 'monthly'>('never');
+  const [scheduleEndDate, setScheduleEndDate] = useState('never');
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarYear, setCalendarYear] = useState(2026);
+  const [calendarMonth, setCalendarMonth] = useState(3); // April
+  const [referenceText, setReferenceText] = useState('');
+  const isScheduled = scheduleDate !== null;
 
   // Open currency sheet
   const openCurrencySheet = useCallback((target: 'send' | 'receive') => {
@@ -98,7 +128,6 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
   }, []);
 
   // Determine if we are in cross-currency mode
-  // Compare what the user sends vs what the recipient gets
   const recipientCurrency = (forcedReceiveCurrency && !userOverrodeReceiveCurrency) ? forcedReceiveCurrency : currency;
   const isCrossCurrency = sendCurrency !== recipientCurrency;
   const crossRate = isCrossCurrency ? convertToHomeCurrency(1, sendCurrency, recipientCurrency, rates).toFixed(4) : '';
@@ -149,6 +178,9 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
   // Account avatar style for currency selector — driven by props
   const accountAvatarStyle = { backgroundColor: accountStyle.color, color: accountStyle.textColor };
 
+  // Short date string for the "Arrives/Sends on" row
+  const shortDate = scheduleDate ? formatScheduleDateShort(scheduleDate) : '';
+
   // Select a recipient and transition to amount step
   const handleSelectRecipient = useCallback((r: Recipient) => {
     const info: RecipientInfo = {
@@ -164,7 +196,6 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
     setCurrency(forcedReceiveCurrency ?? r.badgeFlagCode ?? defaultCurrency);
     setCurrencySheetTarget(null);
     setCrossTransition('idle');
-    // Preserve prefilled amounts from calculator; otherwise reset for fresh entry
     if (loadingTimerRef.current) {
       clearTimeout(loadingTimerRef.current);
       loadingTimerRef.current = null;
@@ -188,7 +219,6 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
     setIsAnimating(true);
     setTimeout(() => setIsAnimating(false), 600);
 
-    // Focus input after transition
     setTimeout(() => {
       const input = bodyRef.current?.querySelector<HTMLInputElement>('.wds-expressive-money-input input');
       input?.focus();
@@ -260,11 +290,9 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
   // Animate the slide-down of gets input + button when cross-top appears (and reverse on collapse)
   useEffect(() => {
     if (crossTransition === 'revealing' && crossTopRef.current && slideWrapperRef.current) {
-      // Focus the gets input to trigger its active/expressive state while sliding
       const getsInput = slideWrapperRef.current.querySelector<HTMLInputElement>('.wds-expressive-money-input input');
       getsInput?.focus();
 
-      // Measure the cross-top's natural height — this is how far everything slides down
       const height = crossTopRef.current.offsetHeight;
       slideAnimRef.current = slideWrapperRef.current.animate(
         [
@@ -278,11 +306,9 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
         },
       );
     } else if (crossTransition === 'collapsing' && crossTopRef.current && slideWrapperRef.current) {
-      // Focus the gets input to trigger its active/expressive state while the cross-top collapses
       const getsInput = slideWrapperRef.current.querySelector<HTMLInputElement>('.wds-expressive-money-input input');
       getsInput?.focus();
 
-      // Animate the cross-top's height to 0
       const crossHeight = crossTopRef.current.offsetHeight;
       crossTopRef.current.style.overflow = 'hidden';
       slideAnimRef.current = crossTopRef.current.animate(
@@ -297,7 +323,6 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
         },
       );
 
-      // Simultaneously expand the same-bottom section (shimmer) from 0
       if (reverseShimmerRef.current && sameCurrencyBottomRef.current) {
         const el = sameCurrencyBottomRef.current;
         el.style.overflow = 'hidden';
@@ -342,24 +367,19 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
     const wasNotCross = !wasCross;
     const willBeCross = code !== recipientCurrency;
 
-    // Recalculate amounts with new send currency
     if (amount !== null && amount !== 0 && willBeCross) {
       setReceiveAmount(Math.round(convertToHomeCurrency(amount, code, recipientCurrency, rates) * 100) / 100);
     }
 
-    // Transition: same → cross (shimmer → reveal)
     if (wasNotCross && willBeCross) {
       setSendCurrency(code);
       setCrossTransition('shimmer');
       setTimeout(() => setCrossTransition('revealing'), 1200);
       setTimeout(() => setCrossTransition('idle'), 2000);
-    }
-    // Transition: cross → same (collapse cross-top + expand same-bottom simultaneously)
-    else if (wasCross && !willBeCross) {
+    } else if (wasCross && !willBeCross) {
       reverseShimmerRef.current = true;
       pendingSendCurrencyRef.current = code;
       setCrossTransition('collapsing');
-      // After both animations complete, switch to shimmer briefly then idle
       setTimeout(() => {
         setSendCurrency(code);
         if (amount !== null && amount !== 0) {
@@ -376,9 +396,7 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
           }, 100);
         }, 600);
       }, 500);
-    }
-    // Same currency change (cross → different cross, or same → same)
-    else {
+    } else {
       setSendCurrency(code);
       if (wasCross && willBeCross && amount !== null && amount !== 0) {
         setReceiveAmount(Math.round(convertToHomeCurrency(amount, code, recipientCurrency, rates) * 100) / 100);
@@ -386,14 +404,12 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
     }
   }, [amount, recipientCurrency, rates, sendCurrency]);
 
-  // Handle selecting a receive currency (from the gets input currency selector)
   const handleSelectReceiveCurrency = useCallback((code: string) => {
     const wasCross = sendCurrency !== recipientCurrency;
     const willBeCross = sendCurrency !== code;
 
     setUserOverrodeReceiveCurrency(true);
 
-    // Same → cross: recipient gets a different currency now
     if (!wasCross && willBeCross) {
       setCurrency(code);
       setCrossTransition('shimmer');
@@ -402,11 +418,9 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
       }
       setTimeout(() => setCrossTransition('revealing'), 1200);
       setTimeout(() => setCrossTransition('idle'), 2000);
-    }
-    // Cross → same: recipient now gets the same currency as send
-    else if (wasCross && !willBeCross) {
+    } else if (wasCross && !willBeCross) {
       reverseShimmerRef.current = true;
-      pendingSendCurrencyRef.current = sendCurrency; // keep same send currency, just change receive
+      pendingSendCurrencyRef.current = sendCurrency;
       setCrossTransition('collapsing');
       setTimeout(() => {
         setCurrency(code);
@@ -422,9 +436,7 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
           }, 100);
         }, 600);
       }, 500);
-    }
-    // Cross → different cross
-    else {
+    } else {
       setCurrency(code);
       if (amount !== null && amount !== 0) {
         setReceiveAmount(Math.round(convertToHomeCurrency(amount, sendCurrency, code, rates) * 100) / 100);
@@ -451,25 +463,23 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
     }
   }, [step, prefillAmount]);
 
-  // Handle back button — slide first, then clean up after animation
+  // Handle back button
   const handleBack = useCallback(() => {
+    if (step === 'confirm') { setStep('amount'); return; }
     if (step === 'amount') {
       if (loadingTimerRef.current) {
         clearTimeout(loadingTimerRef.current);
         loadingTimerRef.current = null;
       }
-      // Start the slide animation
       setStep('recipient');
       onStepChange?.('recipient');
       setIsAnimating(true);
       setTimeout(() => setIsAnimating(false), 600);
       setCueVisible(false);
 
-      // Scroll recipient panel back to top
       const panel = document.querySelector('.send-flow__panel:first-child');
       if (panel) panel.scrollTop = 0;
 
-      // Clear amount step state after the slide animation completes
       setTimeout(() => {
         setSelectedRecipient(null);
         setAmount(null);
@@ -481,6 +491,373 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
       }, 600);
     }
   }, [step]);
+
+  const handleConfirm = useCallback(() => {
+    if (amount !== null && selectedRecipient) {
+      // Snapshot all data the success screen needs before any state changes happen
+      successDataRef.current = { amount, currency: sendCurrency, recipientName: selectedRecipient.name, scheduleDate, scheduleRepeats };
+      onSuccess?.(amount, sendCurrency, selectedRecipient.name, scheduleRepeats !== 'never');
+      setStep('success');
+    }
+  }, [amount, sendCurrency, selectedRecipient, scheduleRepeats, scheduleDate, onSuccess]);
+
+  // Schedule step — early return
+  if (step === 'schedule') {
+    const calCells = buildCalendarCells(calendarYear, calendarMonth);
+    return (
+      <div className="send-flow">
+        <div className="send-flow__body" style={{ overflowY: 'auto', padding: '56px 24px 40px', display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
+          <button
+            type="button"
+            className="send-flow__schedule-close-btn"
+            onClick={() => setStep('amount')}
+            aria-label="Close"
+          >
+            <Cross size={16} />
+          </button>
+
+          <h1 className="send-flow__schedule-heading">Create a scheduled or recurring transfer</h1>
+          <p className="send-flow__schedule-body-text">
+            You can choose to send this transfer at a later date, and whether it repeats. You'll need enough money in your account to pay on the scheduled date.
+          </p>
+
+          <div className="send-flow__schedule-fields">
+            {/* Date field */}
+            <div>
+              <p className="send-flow__schedule-field-label">Date</p>
+              <button
+                type="button"
+                className={`send-flow__dropdown-trigger${!scheduleDate ? ' send-flow__dropdown-trigger--placeholder' : ''}`}
+                onClick={() => setCalendarOpen((prev) => !prev)}
+              >
+                <span>{scheduleDate ? formatScheduleDate(scheduleDate) : 'Select a date'}</span>
+                <ChevronDown size={16} />
+              </button>
+
+              {calendarOpen && (
+                <div className="send-flow__calendar-popup">
+                  <div className="send-flow__cal-header">
+                    <div className="send-flow__cal-month-label">
+                      <span>{MONTH_NAMES[calendarMonth]} {calendarYear}</span>
+                      <ChevronRight size={16} />
+                    </div>
+                    <button
+                      type="button"
+                      className="send-flow__cal-nav-btn"
+                      aria-label="Previous month"
+                      onClick={() => {
+                        if (calendarMonth === 0) {
+                          setCalendarMonth(11);
+                          setCalendarYear((y) => y - 1);
+                        } else {
+                          setCalendarMonth((m) => m - 1);
+                        }
+                      }}
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      className="send-flow__cal-nav-btn"
+                      aria-label="Next month"
+                      onClick={() => {
+                        if (calendarMonth === 11) {
+                          setCalendarMonth(0);
+                          setCalendarYear((y) => y + 1);
+                        } else {
+                          setCalendarMonth((m) => m + 1);
+                        }
+                      }}
+                    >
+                      ›
+                    </button>
+                    <button
+                      type="button"
+                      className="send-flow__cal-close-btn"
+                      aria-label="Close calendar"
+                      onClick={() => setCalendarOpen(false)}
+                    >
+                      <Cross size={16} />
+                    </button>
+                  </div>
+
+                  <div className="send-flow__cal-weekdays">
+                    {['MON','TUE','WED','THU','FRI','SAT','SUN'].map((d) => (
+                      <div key={d} className="send-flow__cal-weekday">{d}</div>
+                    ))}
+                  </div>
+
+                  <div className="send-flow__cal-days">
+                    {calCells.map((day, idx) => {
+                      if (day === null) {
+                        return <button key={idx} type="button" className="send-flow__cal-day send-flow__cal-day--empty" disabled aria-hidden="true" />;
+                      }
+                      const cellDate = new Date(calendarYear, calendarMonth, day);
+                      const isToday = cellDate.getTime() === TODAY.getTime();
+                      const isPast = cellDate < TODAY;
+                      const isSelected = scheduleDate !== null && cellDate.getTime() === scheduleDate.getTime();
+                      let cls = 'send-flow__cal-day';
+                      if (isToday) cls += ' send-flow__cal-day--today';
+                      if (isPast) cls += ' send-flow__cal-day--past';
+                      if (isSelected) cls += ' send-flow__cal-day--selected';
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          className={cls}
+                          disabled={isPast}
+                          onClick={() => {
+                            if (!isPast) {
+                              setScheduleDate(new Date(calendarYear, calendarMonth, day));
+                              setCalendarOpen(false);
+                            }
+                          }}
+                        >
+                          {day}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Repeats field — only show when scheduleDate is set */}
+            {scheduleDate && (
+              <div>
+                <p className="send-flow__schedule-field-label">Repeats</p>
+                <select
+                  className="send-flow__dropdown-select"
+                  value={scheduleRepeats}
+                  onChange={(e) => setScheduleRepeats(e.target.value as 'never' | 'weekly' | 'monthly')}
+                >
+                  <option value="never">Never</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+            )}
+
+            {/* End date field — only show when scheduleRepeats !== 'never' */}
+            {scheduleRepeats !== 'never' && (
+              <div>
+                <p className="send-flow__schedule-field-label">End date</p>
+                <select
+                  className="send-flow__dropdown-select"
+                  value={scheduleEndDate}
+                  onChange={(e) => setScheduleEndDate(e.target.value)}
+                >
+                  <option value="never">Never</option>
+                  <option value="after-6-months">After 6 months</option>
+                  <option value="after-1-year">After 1 year</option>
+                </select>
+              </div>
+            )}
+
+            <div style={{ flex: 1 }} />
+
+            <Button
+              v2
+              size="lg"
+              priority="primary"
+              block
+              disabled={!scheduleDate}
+              onClick={() => {
+                setCalendarOpen(false);
+                setStep('amount');
+              }}
+            >
+              Set schedule
+            </Button>
+            <Button
+              v2
+              size="lg"
+              priority="secondary"
+              block
+              onClick={() => {
+                setScheduleDate(null);
+                setScheduleRepeats('never');
+                setStep('amount');
+              }}
+            >
+              Send now instead
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Success — unconditional early return using snapshotted data from handleConfirm
+  if (step === 'success') {
+    const d = successDataRef.current;
+    const fmtAmount = d ? d.amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : (amount?.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00');
+    const recipientName = d?.recipientName ?? selectedRecipient?.name ?? '';
+    const successScheduleDate = d?.scheduleDate ?? scheduleDate;
+    const successScheduleRepeats = d?.scheduleRepeats ?? scheduleRepeats;
+    const successCurrency = d?.currency ?? sendCurrency;
+
+    return (
+      <div className="send-flow" style={{ background: '#163300', color: '#fff', padding: '56px 24px 44px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div className="add-money-success__header">
+          <GlassCircle onClick={onClose} ariaLabel="Close">
+            <span className="ios-glass-btn__icon"><Cross size={24} /></span>
+          </GlassCircle>
+        </div>
+        {successScheduleDate !== null ? (
+          <div className="add-money-success__content">
+            <div className="send-success__scheduled-icon">
+              <Illustration name="confetti" size="large" />
+            </div>
+            <h1 className="send-success__scheduled-title">
+              {successScheduleRepeats !== 'never' ? 'YOUR TRANSFERS ARE SCHEDULED' : 'YOUR TRANSFER IS SCHEDULED'}
+            </h1>
+            <p className="send-success__scheduled-desc">
+              We've scheduled {successScheduleRepeats !== 'never' ? successScheduleRepeats + ' ' : ''}transfers of {fmtAmount} {successCurrency} to {recipientName}, starting on {successScheduleDate ? formatScheduleDateShort(successScheduleDate) : ''}.
+            </p>
+            <p className="send-success__scheduled-note">
+              Ensure your account has enough money before each scheduled date to prevent delays.
+            </p>
+          </div>
+        ) : (
+          <div className="add-money-success__content">
+            <div className="add-money-success__illustration">
+              <Illustration name="confetti" size="large" />
+            </div>
+            <h1 className="add-money-success__title">{t('send.successTitle')}</h1>
+            <div className="send-success__details">
+              <p className="send-success__amount">{fmtAmount} {successCurrency}</p>
+              <p className="send-success__recipient">to {recipientName}</p>
+              <div className="send-success__meta">
+                <span className="send-success__tag send-success__tag--account">{accountLabel}</span>
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="add-money-success__footer" style={successScheduleDate !== null ? { display: 'flex', flexDirection: 'column', gap: 12 } : undefined}>
+          {successScheduleDate !== null ? (
+            <>
+              <Button v2 size="lg" priority="primary" block onClick={onClose}>Add money</Button>
+              <Button v2 size="lg" priority="secondary" block onClick={onClose}>View scheduled transfers</Button>
+            </>
+          ) : (
+            <Button v2 size="lg" priority="primary" block onClick={onClose}>{t('addMoney.gotIt')}</Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Confirm
+  if (step === 'confirm' && selectedRecipient) {
+    const fmtAmount = amount?.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00';
+    return (
+      <div className="send-flow">
+        <div style={{ overflowY: 'auto', flex: 1 }}>
+            <div className="send-flow__confirm-step">
+              <div style={{ padding: '56px 24px 0', display: 'flex', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px 4px 0', display: 'flex', alignItems: 'center', color: 'var(--color-content-primary)' }}
+                  onClick={() => setStep('amount')}
+                  aria-label="Back"
+                >
+                  <span style={{ transform: 'rotate(180deg)', display: 'inline-flex' }}><ChevronRight size={24} /></span>
+                </button>
+              </div>
+              <h1 className="send-flow__confirm-title">Confirm and send</h1>
+
+              {/* Payment method */}
+              <div className="send-flow__confirm-section">
+                <div className="send-flow__confirm-section-header">
+                  <p className="send-flow__confirm-section-label">Payment method</p>
+                </div>
+                <div className="send-flow__confirm-payment-row">
+                  <ListItem.AvatarView size={40} style={accountAvatarStyle}>
+                    <WiseLogoIcon />
+                  </ListItem.AvatarView>
+                  <div className="send-flow__confirm-payment-info">
+                    <p className="send-flow__confirm-payment-title">{accountLabel} / {sendCurrency}</p>
+                    <p className="send-flow__confirm-payment-sub">{availableBalance} available</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Transfer details */}
+              <div className="send-flow__confirm-section">
+                <div className="send-flow__confirm-section-header">
+                  <p className="send-flow__confirm-section-label">Transfer details</p>
+                  <button type="button" className="send-flow__confirm-change-btn" onClick={() => setStep('amount')}>Change</button>
+                </div>
+                <div className="send-flow__confirm-row">
+                  <p className="send-flow__confirm-key">You send</p>
+                  <p className="send-flow__confirm-val">{fmtAmount} {sendCurrency}</p>
+                </div>
+                <div className="send-flow__confirm-row">
+                  <p className="send-flow__confirm-key">Total fees (included)</p>
+                  <p className="send-flow__confirm-val">0 {sendCurrency}</p>
+                </div>
+                <div className="send-flow__confirm-row">
+                  <p className="send-flow__confirm-key">{selectedRecipient.name} gets exactly</p>
+                  <p className="send-flow__confirm-val">{fmtAmount} {sendCurrency}</p>
+                </div>
+              </div>
+
+              {/* Recipient details */}
+              <div className="send-flow__confirm-section">
+                <div className="send-flow__confirm-section-header">
+                  <p className="send-flow__confirm-section-label">Recipient details</p>
+                  <button type="button" className="send-flow__confirm-change-btn" onClick={() => setStep('recipient')}>Change</button>
+                </div>
+                <div className="send-flow__confirm-row">
+                  <p className="send-flow__confirm-key">Account holder name</p>
+                  <p className="send-flow__confirm-val">{selectedRecipient.name}</p>
+                </div>
+                <div className="send-flow__confirm-row">
+                  <p className="send-flow__confirm-key">Account provider</p>
+                  <p className="send-flow__confirm-val">Wise</p>
+                </div>
+              </div>
+
+              {/* Schedule details — only if isScheduled */}
+              {isScheduled && scheduleDate && (
+                <div className="send-flow__confirm-section">
+                  <div className="send-flow__confirm-section-header">
+                    <p className="send-flow__confirm-section-label">Schedule details</p>
+                    <button type="button" className="send-flow__confirm-change-btn" onClick={() => setStep('schedule')}>Change</button>
+                  </div>
+                  <div className="send-flow__confirm-row">
+                    <p className="send-flow__confirm-key">Sends on</p>
+                    <p className="send-flow__confirm-val">{formatScheduleDateShort(scheduleDate)}</p>
+                  </div>
+                  <div className="send-flow__confirm-row">
+                    <p className="send-flow__confirm-key">Repeats</p>
+                    <p className="send-flow__confirm-val">
+                      {scheduleRepeats === 'monthly' ? 'Monthly' : scheduleRepeats === 'weekly' ? 'Weekly' : 'Once'}
+                    </p>
+                  </div>
+                  {scheduleRepeats !== 'never' && (
+                    <div className="send-flow__confirm-row">
+                      <p className="send-flow__confirm-key">End date</p>
+                      <p className="send-flow__confirm-val">
+                        {scheduleEndDate === 'never' ? 'Never' : scheduleEndDate}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Footer */}
+              <div className="send-flow__confirm-footer">
+                <Button v2 size="lg" priority="primary" block onClick={handleConfirm}>
+                  {isScheduled ? 'Schedule transfer' : 'Confirm and send'}
+                </Button>
+              </div>
+            </div>
+          </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`send-flow${isSearching ? ' send-flow--searching' : ''}`}>
@@ -609,7 +986,6 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
         <div className="send-flow__panel">
         <div className="send-flow__body" ref={step === 'amount' ? bodyRef : undefined}>
           {/* === CROSS-TOP: rate pill + send input + divider === */}
-          {/* Expands from 0 height during revealing, pushing the gets input down with bounce */}
           {selectedRecipient && (crossTransition === 'revealing' || crossTransition === 'collapsing' || (isCrossCurrency && crossTransition === 'idle')) && (
             <div ref={crossTopRef} className={`send-flow__cross-top${crossTransition === 'revealing' ? ' send-flow__cross-top--revealing' : crossTransition === 'collapsing' ? ' send-flow__cross-top--collapsing' : ' send-flow__cross-top--expanded'}`}>
               {/* You send input */}
@@ -737,6 +1113,73 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
 
           </div>{/* end slide-wrapper */}
 
+          {/* Review metadata rows — only show when selectedRecipient && !isCrossCurrency && crossTransition === 'idle' */}
+          {selectedRecipient && !isCrossCurrency && crossTransition === 'idle' && (
+            <div className="send-flow__review-rows">
+              {/* Paying with */}
+              <ListItem
+                title={<span className="np-text-body-default" style={{ fontWeight: 400, color: 'var(--color-content-secondary)' }}>Paying with</span>}
+                subtitle={<span className="np-text-body-large" style={{ fontWeight: 600, color: 'var(--color-content-primary)' }}>{accountLabel} / {sendCurrency}</span>}
+                media={
+                  <ListItem.AvatarView size={40} style={accountAvatarStyle}>
+                    <WiseLogoIcon />
+                  </ListItem.AvatarView>
+                }
+              />
+
+              {/* Arrives/Sends on */}
+              <ListItem
+                title={
+                  <span className="np-text-body-default" style={{ fontWeight: 400, color: 'var(--color-content-secondary)' }}>
+                    {scheduleDate ? `Sends on ${shortDate}` : 'Arrives'}
+                  </span>
+                }
+                subtitle={
+                  scheduleDate && scheduleRepeats !== 'never'
+                    ? <span className="np-text-body-large" style={{ fontWeight: 600, color: 'var(--color-content-primary)' }}>Repeats {scheduleRepeats}</span>
+                    : scheduleDate
+                    ? undefined
+                    : <span className="np-text-body-large" style={{ fontWeight: 600, color: 'var(--color-content-primary)' }}>Today — in seconds</span>
+                }
+                media={
+                  <ListItem.AvatarView size={40} style={{ backgroundColor: 'var(--color-background-neutral)', border: 'none' }}>
+                    <Send size={16} />
+                  </ListItem.AvatarView>
+                }
+                control={
+                  onSuccess ? (
+                    <Button v2 size="sm" priority="secondary-neutral" onClick={() => setStep('schedule')}>
+                      Schedule
+                    </Button>
+                  ) : undefined
+                }
+              />
+
+              {/* Total fees */}
+              <ListItem
+                title={<span className="np-text-body-default" style={{ fontWeight: 400, color: 'var(--color-content-secondary)' }}>Total fees</span>}
+                subtitle={<span className="np-text-body-large" style={{ fontWeight: 600, color: 'var(--color-content-primary)' }}>Free — no fees to pay</span>}
+                media={
+                  <ListItem.AvatarView size={40} style={{ backgroundColor: 'var(--color-background-neutral)', border: 'none' }}>
+                    <Document size={16} />
+                  </ListItem.AvatarView>
+                }
+              />
+
+              {/* Reference input */}
+              <div className="send-flow__reference-wrap">
+                <p className="send-flow__reference-label">Reference for {selectedRecipient.name} (optional)</p>
+                <input
+                  type="text"
+                  className="send-flow__reference-input"
+                  value={referenceText}
+                  onChange={(e) => setReferenceText(e.target.value)}
+                  placeholder=""
+                />
+              </div>
+            </div>
+          )}
+
           {/* Continue button — outside slide-wrapper so it doesn't move during cross-currency transition */}
           {selectedRecipient && (
             <div className="send-flow__continue" style={isCrossCurrency ? { marginTop: 40 } : undefined}>
@@ -764,6 +1207,17 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
                   loading={buttonState === 'loading' || crossTransition === 'shimmer'}
                   className={(buttonState === 'loading' || crossTransition === 'shimmer') ? 'send-flow__btn-loading' : undefined}
                   block
+                  onClick={onSuccess ? () => {
+                    if (buttonState !== 'active') return;
+                    if (isScheduled && amount !== null && selectedRecipient) {
+                      // Scheduled payment — skip confirm, go straight to success
+                      successDataRef.current = { amount, currency: sendCurrency, recipientName: selectedRecipient.name, scheduleDate, scheduleRepeats };
+                      onSuccess(amount, sendCurrency, selectedRecipient.name, scheduleRepeats !== 'never');
+                      setStep('success');
+                    } else {
+                      setStep('confirm');
+                    }
+                  } : undefined}
                 >
                   {t('send.continue')}
                 </Button>
@@ -783,6 +1237,7 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
         selectedCode={currencySheetTarget === 'send' ? sendCurrency : recipientCurrency}
         recentCodes={recentCurrencyCodes}
       />
+
     </div>
   );
 }

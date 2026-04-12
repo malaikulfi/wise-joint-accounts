@@ -32,6 +32,8 @@ type Props = {
   onPaymentLink?: () => void;
   moreMenuOpen?: boolean;
   onMoreMenuClose?: () => void;
+  balanceAdjustment?: number;
+  txList?: Transaction[];
 };
 
 function CurrenciesSection({ onNavigateCurrency, activeCurrencies, isGroup }: { onNavigateCurrency?: (code: string) => void; activeCurrencies: typeof currencies; isGroup?: boolean }) {
@@ -240,7 +242,7 @@ function SidebarContent({ onNavigateCards, accountType = 'personal', jar, accoun
   );
 }
 
-export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountDetails, accountType = 'personal', jar, jarConfig, initialTab, onAdd, onConvert, onSend, onRequest, onPaymentLink, moreMenuOpen, onMoreMenuClose }: Props) {
+export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountDetails, accountType = 'personal', jar, jarConfig, initialTab, onAdd, onConvert, onSend, onRequest, onPaymentLink, moreMenuOpen, onMoreMenuClose, balanceAdjustment = 0, txList }: Props) {
   const { consumerName, businessName } = usePrototypeNames();
   const { t } = useLanguage();
   const txLabels = useTxLabels();
@@ -254,9 +256,10 @@ export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountD
   const isJoint = jar === 'joint';
   const isJar = !!jarConfig;
   const activeCurrencies = isJoint ? jointAccountCurrencies : isJar ? jarConfig.currencies : isGroup ? groupCurrencies : (accountType === 'business' ? businessCurrencies : currencies);
-  const activeTransactions = isJoint ? jointAccountTransactions : isJar ? jarConfig.transactions : isGroup ? groupTransactions : (accountType === 'business' ? businessTransactions : personalTransactions);
-  const displayCode = activeCurrencies[0]?.code ?? 'GBP';
-  const activeTotal = activeCurrencies.reduce((sum, c) => sum + convertToHomeCurrency(c.balance, c.code, displayCode, rates), 0);
+  const effectiveCurrencies = (isJoint && balanceAdjustment) ? activeCurrencies.map(c => ({ ...c, balance: c.balance + balanceAdjustment })) : activeCurrencies;
+  const activeTransactions = isJoint ? (txList ?? jointAccountTransactions) : isJar ? jarConfig.transactions : isGroup ? groupTransactions : (accountType === 'business' ? businessTransactions : personalTransactions);
+  const displayCode = effectiveCurrencies[0]?.code ?? 'GBP';
+  const activeTotal = effectiveCurrencies.reduce((sum, c) => sum + convertToHomeCurrency(c.balance, c.code, displayCode, rates), 0);
   const balanceFormatted = `${activeTotal.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${displayCode}`;
   const accountLabel = isJoint ? 'Joint account' : isJar ? t(jarConfig.nameKey) : isGroup ? t('home.taxes') : t('home.currentAccount');
 
@@ -285,6 +288,7 @@ export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountD
         jarColor={isJar ? jarConfig.color : undefined}
         jarIcon={jarIcon}
         hideGetPaid={isJar}
+        sendSecondary={isJoint && balanceAdjustment === 0}
         onAdd={onAdd}
         onConvert={onConvert}
         onSend={onSend}
@@ -310,7 +314,7 @@ export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountD
           />
         </div>
 
-        {activeTab === 'currencies' && <CurrenciesSection onNavigateCurrency={onNavigateCurrency} activeCurrencies={activeCurrencies} isGroup={(isGroup || isJoint) && !isJar} />}
+        {activeTab === 'currencies' && <CurrenciesSection onNavigateCurrency={onNavigateCurrency} activeCurrencies={effectiveCurrencies} isGroup={(isGroup || isJoint) && !isJar} />}
         {activeTab === 'transactions' && <TransactionsSection activeTransactions={activeTransactions} />}
         {activeTab === 'options' && !isJar && <SidebarContent onNavigateCards={onNavigateCards} accountType={accountType} jar={jar} accountLabel={accountLabel} />}
       </div>

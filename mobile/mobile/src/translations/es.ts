@@ -429,13 +429,16 @@ const es: Translations = {
   'addMoney.bankTransfer': 'Transferencia bancaria',
   'addMoney.todayInSeconds': 'Hoy - en segundos',
   'addMoney.noFees': 'Total - sin comisiones',
+  'addMoney.successTitle': 'Listo',
+  'addMoney.successSubtitle': 'Has añadido {amount} a tu {account}. Así de fácil.',
+  'addMoney.gotIt': 'Entendido',
 
   // Convert Flow
   'convert.from': 'De',
   'convert.to': 'A',
   'convert.available': 'Disponible: {amount}',
   'convert.enterAmount': 'Ingresa cualquier monto para continuar',
-  'convert.review': 'Revisar',
+  'convert.confirm': 'Confirmar',
   'convert.rate': '1 {from} = {rate} {to}',
   'convert.autoConvert': 'Configurar una conversi\u00F3n autom\u00E1tica',
   'convert.autoConvertSub': 'Convertiremos tu dinero cuando alcance el tipo de cambio deseado.',
@@ -463,6 +466,13 @@ const es: Translations = {
   'send.amount': 'Monto',
   'send.review': 'Revisar',
   'send.pay': 'Pagar',
+  'send.confirm': 'Confirmar',
+  'send.recurringPayment': 'Pago recurrente',
+  'send.recurringMonthly': 'Mensual · día 28',
+  'send.recurringOff': 'Desactivado',
+  'send.successTitle': '¡Pago enviado!',
+  'send.scheduledFrom': 'desde {account}',
+  'send.scheduledMonthly': 'Mensual desde el día 28',
 
   // Request Flow
   'request.whoRequestingFrom': '¿A quién le estás solicitando?',

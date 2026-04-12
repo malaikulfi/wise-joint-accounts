@@ -24,6 +24,7 @@ export const jointAccountContacts: Recipient[] = [
 
 // Sorted alphabetically by name
 export const recipients: Recipient[] = [
+  { id: 22, name: 'Oakfield Properties', subtitle: 'Barclays Bank Plc ending ·· 3947', avatarType: 'initials', initials: 'OP', hasFastFlag: false, badgeFlagCode: 'GBP' },
   { id: 1, name: 'Aiden Nakamura', subtitle: '@aidenn482', avatarType: 'photo', avatarSlug: 'aiden-nakamura', hasFastFlag: true },
   { id: 2, name: 'Amara Diallo', subtitle: '@amarad104', avatarType: 'photo', avatarSlug: 'amara-diallo', hasFastFlag: true },
   { id: 3, name: 'Barclays', subtitle: 'Barclays Bank Plc ending ·· 4821', avatarType: 'logo', initials: 'B', hasFastFlag: false, isMyAccount: true, badgeFlagCode: 'GBP' },
@@ -49,6 +50,7 @@ export const recipients: Recipient[] = [
 
 // Christie first, then random order
 export const recentContacts = [
+  { name: 'Oakfield Properties', subtitle: 'Barclays Bank', initials: 'OP', badge: { flagCode: 'GBP' } },
   { name: 'Christie Davis', subtitle: '@christied25', imgSrc: 'https://www.tapback.co/api/avatar/christie-davis.webp', badge: { icon: <FastFlag size={16} />, type: 'action' as const } },
   { name: 'Kenji Oduya', subtitle: '@kenjio362', imgSrc: 'https://www.tapback.co/api/avatar/kenji-oduya.webp', badge: { icon: <FastFlag size={16} />, type: 'action' as const } },
   { name: 'Revolut', subtitle: 'Revolut Ltd', imgSrc: 'https://www.tapback.co/api/avatar/connor-berry.webp', badge: { flagCode: 'GBP' } },
