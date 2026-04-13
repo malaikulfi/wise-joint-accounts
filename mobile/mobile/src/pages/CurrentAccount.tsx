@@ -210,30 +210,34 @@ function SidebarContent({ onNavigateCards, accountType = 'personal', jar, accoun
         media={<SpendCardMedia accountType={accountType} jar={jar} />}
         control={<ListItem.Navigation onClick={() => onNavigateCards?.()} />}
       />
-      {isJoint && (
+      {isJoint && (scheduledTransfers.length > 0 || directDebits.length > 0) && (
         <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <ListItem
-            spotlight="active"
-            title="Scheduled transfers"
-            subtitle={scheduledTransfers.length > 0 ? `${scheduledTransfers.length} scheduled` : 'No scheduled transfers'}
-            media={
-              <ListItem.AvatarView size={48} style={{ backgroundColor: 'var(--color-background-neutral)', border: 'none' }}>
-                <Calendar size={24} />
-              </ListItem.AvatarView>
-            }
-            control={<ListItem.Navigation onClick={() => onViewScheduled?.()} />}
-          />
-          <ListItem
-            spotlight="active"
-            title="Direct debits"
-            subtitle={directDebits.length > 0 ? `${directDebits.length} active` : 'No direct debits'}
-            media={
-              <ListItem.AvatarView size={48} style={{ backgroundColor: 'var(--color-background-neutral)', border: 'none' }}>
-                <DirectDebits size={24} />
-              </ListItem.AvatarView>
-            }
-            control={<ListItem.Navigation onClick={() => onViewDirectDebits?.()} />}
-          />
+          {scheduledTransfers.length > 0 && (
+            <ListItem
+              spotlight="active"
+              title="Scheduled transfers"
+              subtitle={`${scheduledTransfers.length} scheduled`}
+              media={
+                <ListItem.AvatarView size={48} style={{ backgroundColor: 'var(--color-background-neutral)', border: 'none' }}>
+                  <Calendar size={24} />
+                </ListItem.AvatarView>
+              }
+              control={<ListItem.Navigation onClick={() => onViewScheduled?.()} />}
+            />
+          )}
+          {directDebits.length > 0 && (
+            <ListItem
+              spotlight="active"
+              title="Direct debits"
+              subtitle={`${directDebits.length} active`}
+              media={
+                <ListItem.AvatarView size={48} style={{ backgroundColor: 'var(--color-background-neutral)', border: 'none' }}>
+                  <DirectDebits size={24} />
+                </ListItem.AvatarView>
+              }
+              control={<ListItem.Navigation onClick={() => onViewDirectDebits?.()} />}
+            />
+          )}
         </div>
       )}
       {isGroup && (
