@@ -39,6 +39,7 @@ type Props = {
   cardInfoLight?: boolean;
   businessCardStyle?: boolean;
   onAccountDetails?: () => void;
+  members?: Array<{ avatarUrl: string }>;
 };
 
 export function MultiCurrencyAccountCard({
@@ -58,6 +59,7 @@ export function MultiCurrencyAccountCard({
   cardInfoLight = false,
   businessCardStyle = false,
   onAccountDetails,
+  members,
 }: Props) {
   const { t } = useLanguage();
   const { shimmerMode } = useShimmer();
@@ -150,7 +152,23 @@ export function MultiCurrencyAccountCard({
                 {totalAmount}&nbsp;· {currencyCount} {t('accountCard.currency', { count: currencyCount })}
               </div>
             ) : undefined}
-            control={<ListItem.Navigation onClick={() => onNavigateAccount?.()} />}
+            control={
+              members && members.length >= 2 ? (
+                <div
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                  onClick={() => onNavigateAccount?.()}
+                >
+                  <AvatarLayout
+                    size={40}
+                    orientation="diagonal"
+                    avatars={members.map((m) => ({ imgSrc: m.avatarUrl }))}
+                  />
+                  <ChevronRight size={16} style={{ color: 'var(--color-content-secondary)', flexShrink: 0 }} />
+                </div>
+              ) : (
+                <ListItem.Navigation onClick={() => onNavigateAccount?.()} />
+              )
+            }
           />
         </ul>
 

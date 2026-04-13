@@ -30,6 +30,7 @@ type Props = {
   onSend?: () => void;
   onRequest?: () => void;
   onPaymentLink?: () => void;
+  members?: Array<{ avatarUrl: string }>;
 };
 
 function WiseLogoIcon() {
@@ -62,6 +63,7 @@ export function AccountPageHeader({
   onSend,
   onRequest,
   onPaymentLink,
+  members,
 }: Props) {
   const { t } = useLanguage();
   const { shimmerMode } = useShimmer();
@@ -91,7 +93,15 @@ export function AccountPageHeader({
       {/* Top row: avatar + label/breadcrumb ... more menu */}
       <div className="account-header__top-row">
         <div className="account-header__identity">
-          {type === 'currency' && currencyCode ? (
+          {members && members.length >= 2 ? (
+            <span className="account-header__avatar-mobile">
+              <AvatarLayout
+                size={48}
+                orientation="diagonal"
+                avatars={members.map((m) => ({ imgSrc: m.avatarUrl }))}
+              />
+            </span>
+          ) : type === 'currency' && currencyCode ? (
             <span className="account-header__avatar-mobile">
               <AvatarLayout
                 size={40}

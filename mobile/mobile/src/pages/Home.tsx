@@ -212,6 +212,10 @@ export function Home({ onNavigate, onNavigateAccount, onNavigateCurrency, onNavi
                 cardInfoLight={isDigital}
                 currencyData={[]}
                 onAccountDetails={onJointAccountDetails}
+                members={[
+                  { avatarUrl: 'https://www.tapback.co/api/avatar/connor-berry.webp' },
+                  { avatarUrl: 'https://www.tapback.co/api/avatar/sky-dog.webp' },
+                ]}
               />
             );
           })()}

@@ -328,6 +328,10 @@ export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountD
         onSend={onSend}
         onRequest={isJar ? undefined : onRequest}
         onPaymentLink={isJar ? undefined : onPaymentLink}
+        members={isJoint ? [
+          { avatarUrl: 'https://www.tapback.co/api/avatar/connor-berry.webp' },
+          { avatarUrl: 'https://www.tapback.co/api/avatar/sky-dog.webp' },
+        ] : undefined}
       />
 
       <div>
