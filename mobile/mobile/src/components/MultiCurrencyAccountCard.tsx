@@ -145,40 +145,53 @@ export function MultiCurrencyAccountCard({
         </div>
 
         <ul className="wds-list list-unstyled m-y-0">
-          <ListItem
-            title={<h3 className="np-text-title-subsection" style={{ margin: 0 }}>{title}</h3>}
-            subtitle={currencyCount >= 2 ? (
-              <div className="np-text-body-large">
-                {totalAmount}&nbsp;· {currencyCount} {t('accountCard.currency', { count: currencyCount })}
-              </div>
-            ) : undefined}
-            control={
-              members && members.length >= 2 ? (
-                <div
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
-                  onClick={() => onNavigateAccount?.()}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    {members.map((m, i) => (
-                      <img
-                        key={i}
-                        src={m.avatarUrl}
-                        style={{
-                          width: 32, height: 32, borderRadius: '50%', objectFit: 'cover',
-                          border: '2px solid var(--color-background-screen)',
-                          marginLeft: i > 0 ? -8 : 0,
-                        }}
-                        alt=""
-                      />
-                    ))}
+          {members && members.length >= 2 ? (
+            <div
+              role="button"
+              tabIndex={0}
+              style={{ cursor: 'pointer' }}
+              onClick={() => onNavigateAccount?.()}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigateAccount?.(); } }}
+            >
+              <ListItem
+                title={<h3 className="np-text-title-subsection" style={{ margin: 0 }}>{title}</h3>}
+                subtitle={currencyCount >= 2 ? (
+                  <div className="np-text-body-large">
+                    {totalAmount}&nbsp;· {currencyCount} {t('accountCard.currency', { count: currencyCount })}
                   </div>
-                  <ChevronRight size={16} style={{ color: 'var(--color-content-secondary)', flexShrink: 0 }} />
+                ) : undefined}
+                control={
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      {members.map((m, i) => (
+                        <img
+                          key={i}
+                          src={m.avatarUrl}
+                          style={{
+                            width: 32, height: 32, borderRadius: '50%', objectFit: 'cover',
+                            border: '2px solid var(--color-background-screen)',
+                            marginLeft: i > 0 ? -8 : 0,
+                          }}
+                          alt=""
+                        />
+                      ))}
+                    </div>
+                    <ChevronRight size={16} style={{ color: 'var(--color-content-secondary)', flexShrink: 0 }} />
+                  </div>
+                }
+              />
+            </div>
+          ) : (
+            <ListItem
+              title={<h3 className="np-text-title-subsection" style={{ margin: 0 }}>{title}</h3>}
+              subtitle={currencyCount >= 2 ? (
+                <div className="np-text-body-large">
+                  {totalAmount}&nbsp;· {currencyCount} {t('accountCard.currency', { count: currencyCount })}
                 </div>
-              ) : (
-                <ListItem.Navigation onClick={() => onNavigateAccount?.()} />
-              )
-            }
-          />
+              ) : undefined}
+              control={<ListItem.Navigation onClick={() => onNavigateAccount?.()} />}
+            />
+          )}
         </ul>
 
         <ul className={`wds-list list-unstyled m-y-0 mca-balances${stacked ? ' mca-balances--stacked' : ''}`} aria-label={`${title}. ${totalAmount}.`}>
