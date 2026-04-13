@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button, ExpressiveMoneyInput, ListItem } from '@transferwise/components';
-import { InfoCircle, ChevronDown, ChevronRight, SwitchVertical, AutoConvert, Money, Savings, Suitcase, Cross } from '@transferwise/icons';
+import { InfoCircle, ChevronDown, ChevronRight, SwitchVertical, AutoConvert, Money, Savings, Suitcase, Cross, People } from '@transferwise/icons';
 import { Flag, Illustration } from '@wise/art';
 import { FlowHeader, GlassPill, GlassCircle } from '../components/FlowHeader';
 import { ButtonCue } from '../components/ButtonCue';
@@ -31,6 +31,7 @@ function resolveIcon(iconName: string) {
     case 'Savings': return <Savings size={16} />;
     case 'Suitcase': return <Suitcase size={16} />;
     case 'Money': return <Money size={16} />;
+    case 'People': return <People size={16} />;
     default: return <WiseLogoIcon />;
   }
 }

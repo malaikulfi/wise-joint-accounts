@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Cross, Plus, ChevronRight, Money, Savings, Suitcase } from '@transferwise/icons';
+import { Cross, Plus, ChevronRight, Money, Savings, Suitcase, People } from '@transferwise/icons';
 import { Flag } from '@wise/art';
 
 function WiseLogoIcon() {
@@ -15,6 +15,7 @@ function resolveIcon(iconName: string) {
     case 'Savings': return <Savings size={16} />;
     case 'Suitcase': return <Suitcase size={16} />;
     case 'Money': return <Money size={16} />;
+    case 'People': return <People size={16} />;
     default: return <WiseLogoIcon />;
   }
 }

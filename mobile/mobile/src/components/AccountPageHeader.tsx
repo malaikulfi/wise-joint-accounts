@@ -21,6 +21,7 @@ type Props = {
   onBreadcrumbClick?: () => void;
   accountType?: AccountType;
   jarColor?: string;
+  jarTextColor?: string;
   jarName?: string;
   jarIcon?: React.ReactNode;
   hideGetPaid?: boolean;
@@ -54,6 +55,7 @@ export function AccountPageHeader({
   onBreadcrumbClick,
   accountType = 'personal',
   jarColor,
+  jarTextColor,
   jarName,
   jarIcon,
   hideGetPaid: hideGetPaidProp,
@@ -73,7 +75,7 @@ export function AccountPageHeader({
   const isJarCurrency = type === 'currency' && !!jarColor;
   const hideGetPaid = hideGetPaidProp ?? false;
   const wiseAvatarStyle = (isJar || isJarCurrency) && jarColor
-    ? { backgroundColor: jarColor, color: '#121511' }
+    ? { backgroundColor: jarColor, color: jarTextColor ?? '#121511' }
     : isGroup
       ? { backgroundColor: '#FFEB69', color: '#3a341c' }
       : isBusiness

@@ -280,7 +280,7 @@ function AppInner() {
     ? { color: '#163300', textColor: '#9fe870', iconName: 'Wise' }
     : { color: 'var(--color-interactive-accent)', textColor: 'var(--color-interactive-control)', iconName: 'Wise' };
   const taxesGroupStyle: AccountStyle = { color: '#FFEB69', textColor: '#3a341c', iconName: 'Money' };
-  const jointAccountStyle: AccountStyle = { color: '#0e3d2e', textColor: '#9fe870', iconName: 'Wise' };
+  const jointAccountStyle: AccountStyle = { color: '#0e3d2e', textColor: '#9fe870', iconName: 'People' };
   function jarStyle(jar: { color: string; iconName: string }): AccountStyle {
     return { color: jar.color, textColor: '#121511', iconName: jar.iconName };
   }

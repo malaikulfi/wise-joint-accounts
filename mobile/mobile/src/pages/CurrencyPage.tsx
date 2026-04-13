@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { UpwardGraph, Graph, AutoConvert, Link as LinkIcon, ChevronRight, QuestionMarkCircle, Savings, Suitcase, Documents, DirectDebits, Bank, Bin, Money } from '@transferwise/icons';
+import { UpwardGraph, Graph, AutoConvert, Link as LinkIcon, ChevronRight, QuestionMarkCircle, Savings, Suitcase, Documents, DirectDebits, Bank, Bin, Money, People } from '@transferwise/icons';
 import { Button, ListItem, SegmentedControl } from '@transferwise/components';
 import type { AccountType } from '../App';
 import { AccountPageHeader } from '../components/AccountPageHeader';
@@ -326,9 +326,10 @@ export function CurrencyPage({ code, onNavigateAccount, onAccountDetails, accoun
         onAccountDetailsClick={(isJar || isGroup) ? undefined : onAccountDetails}
         onBreadcrumbClick={onNavigateAccount}
         accountType={accountType}
-        jarColor={isJar ? jarConfig.color : isGroup ? '#FFEB69' : isJoint ? '#9fe870' : undefined}
+        jarColor={isJar ? jarConfig.color : isGroup ? '#FFEB69' : isJoint ? '#0e3d2e' : undefined}
+        jarTextColor={isJoint ? '#9fe870' : undefined}
         jarName={isJar ? t(jarConfig.nameKey) : isGroup ? t('home.taxes') : isJoint ? 'Joint account' : undefined}
-        jarIcon={jarIcon ? jarIcon : isGroup ? <Money size={16} /> : undefined}
+        jarIcon={jarIcon ? jarIcon : isGroup ? <Money size={16} /> : isJoint ? <People size={16} /> : undefined}
         hideGetPaid={isJar}
         sendSecondary={(effectiveCurrency ?? currency).balance === 0}
         onAdd={onAdd}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import { Button, ExpressiveMoneyInput, Chips, ListItem } from '@transferwise/components';
-import { InfoCircle, ChevronDown, ChevronRight, Search, Plus, CameraSparkle, Send, Document, Cross } from '@transferwise/icons';
+import { InfoCircle, ChevronDown, ChevronRight, Search, Plus, CameraSparkle, Send, Document, Cross, People } from '@transferwise/icons';
 import { Illustration } from '@wise/art';
 import { Flag } from '@wise/art';
 import { FlowHeader, GlassPill, GlassCircle } from '../components/FlowHeader';
@@ -25,6 +25,13 @@ function WiseLogoIcon() {
       <path d="M1.875 15.28 7.35 8.838h-.002L4.02 3h18.105l-7.008 19.375h-3.97L16.95 6.3H9.463l1.665 2.883-.008.08-2.56 2.979h4.188l-1.098 3.037z" />
     </svg>
   );
+}
+
+function resolveIcon(iconName: string) {
+  switch (iconName) {
+    case 'People': return <People size={16} />;
+    default: return <WiseLogoIcon />;
+  }
 }
 
 type ButtonState = 'disabled' | 'loading' | 'active';
@@ -775,7 +782,7 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
                 </div>
                 <div className="send-flow__confirm-payment-row">
                   <ListItem.AvatarView size={40} style={accountAvatarStyle}>
-                    <WiseLogoIcon />
+                    {resolveIcon(accountStyle.iconName)}
                   </ListItem.AvatarView>
                   <div className="send-flow__confirm-payment-info">
                     <p className="send-flow__confirm-payment-title">{accountLabel} / {sendCurrency}</p>
@@ -1123,7 +1130,7 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
                 subtitle={<span className="np-text-body-large" style={{ fontWeight: 600, color: 'var(--color-content-primary)' }}>{accountLabel} / {sendCurrency}</span>}
                 media={
                   <ListItem.AvatarView size={40} style={accountAvatarStyle}>
-                    <WiseLogoIcon />
+                    {resolveIcon(accountStyle.iconName)}
                   </ListItem.AvatarView>
                 }
               />
