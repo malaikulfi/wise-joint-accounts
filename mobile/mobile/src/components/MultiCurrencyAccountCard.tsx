@@ -35,6 +35,7 @@ type Props = {
   currencyData?: CurrencyData[];
   cardTopImage?: string;
   cardBottomImage?: string;
+  singleCard?: boolean;
   hideAccountDetails?: boolean;
   cardInfoLight?: boolean;
   businessCardStyle?: boolean;
@@ -55,6 +56,7 @@ export function MultiCurrencyAccountCard({
   currencyData = defaultCurrencyData,
   cardTopImage,
   cardBottomImage,
+  singleCard = false,
   hideAccountDetails = false,
   cardInfoLight = false,
   businessCardStyle = false,
@@ -80,7 +82,7 @@ export function MultiCurrencyAccountCard({
     <article className="mca">
       {hasCards && (
         <div
-          className="mca-cards__stack"
+          className={`mca-cards__stack${singleCard ? ' mca-cards__stack--single' : ''}`}
           role="button"
           tabIndex={0}
           onClick={() => onNavigateCards?.()}
@@ -95,7 +97,7 @@ export function MultiCurrencyAccountCard({
             />
           </div>
           {/* Business card gradient: custom forest-green shades on a fixed dark surface, theme-independent */}
-          {businessCardStyle ? (
+          {!singleCard && (businessCardStyle ? (
             <div
               className="mca-cards__green"
               style={{ background: 'linear-gradient(135deg, #1a3d00 0%, #163300 40%, #122b00 100%)', aspectRatio: '330/208', borderRadius: '20px 20px 0 0' }}
@@ -107,18 +109,32 @@ export function MultiCurrencyAccountCard({
               alt="Wise green card"
               loading="eager"
             />
-          )}
+          ))}
           {/* Forced colors: text overlays a dark card image/gradient, must stay readable in both themes */}
-          <div className="mca-cards__info" style={effectiveCardInfoLight ? { color: '#fff' } : undefined}>
-            <a href="#" className="mca-cards__link" style={effectiveCardInfoLight ? { color: '#fff' } : undefined} onClick={(e) => { e.preventDefault(); onNavigateCards?.(); }}>
-              {t('accountCard.cards', { count: cardCount })} <ChevronRight size={16} />
-            </a>
-            <span className="mca-cards__badge" style={businessCardStyle ? { color: '#9fe870' } : effectiveCardInfoLight ? { color: '#fff' } : undefined}>
-              <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M1.875 15.28 7.35 8.838h-.002L4.02 3h18.105l-7.008 19.375h-3.97L16.95 6.3H9.463l1.665 2.883-.008.08-2.56 2.979h4.188l-1.098 3.037z" />
-              </svg>
-            </span>
-          </div>
+          {!singleCard && (
+            <div className="mca-cards__info" style={effectiveCardInfoLight ? { color: '#fff' } : undefined}>
+              <a href="#" className="mca-cards__link" style={effectiveCardInfoLight ? { color: '#fff' } : undefined} onClick={(e) => { e.preventDefault(); onNavigateCards?.(); }}>
+                {t('accountCard.cards', { count: cardCount })} <ChevronRight size={16} />
+              </a>
+              <span className="mca-cards__badge" style={businessCardStyle ? { color: '#9fe870' } : effectiveCardInfoLight ? { color: '#fff' } : undefined}>
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M1.875 15.28 7.35 8.838h-.002L4.02 3h18.105l-7.008 19.375h-3.97L16.95 6.3H9.463l1.665 2.883-.008.08-2.56 2.979h4.188l-1.098 3.037z" />
+                </svg>
+              </span>
+            </div>
+          )}
+          {singleCard && (
+            <div className="mca-cards__single-overlay" style={{ color: effectiveCardInfoLight ? '#fff' : '#163300' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 700 }}>
+                1 card <ChevronRight size={16} />
+              </span>
+              <span>
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M1.875 15.28 7.35 8.838h-.002L4.02 3h18.105l-7.008 19.375h-3.97L16.95 6.3H9.463l1.665 2.883-.008.08-2.56 2.979h4.188l-1.098 3.037z" />
+                </svg>
+              </span>
+            </div>
+          )}
         </div>
       )}
 

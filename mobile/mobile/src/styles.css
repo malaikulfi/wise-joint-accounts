@@ -675,6 +675,40 @@ html.np-theme-dark .np-overlay-header .np-logo-svg path {
   overflow: visible;
 }
 
+.mca-cards__stack--single .mca-cards__fire {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.mca-cards__stack--single .mca-cards__fire::after {
+  display: none;
+}
+
+.mca-cards__stack--single .mca-cards__fire img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+  transform: scale(1.18);
+  transform-origin: center center;
+}
+
+.mca-cards__single-overlay {
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
 .mca-cards__empty-card {
   position: absolute;
   top: -8px;

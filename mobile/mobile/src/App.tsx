@@ -230,7 +230,7 @@ function stateToPath(navItem: string, subPage: SubPage, accountType: AccountType
 // ── App ─────────────────────────────────────────────────────────────────────
 
 function AppInner() {
-  const { consumerName, businessName, consumerHomeCurrency, businessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted, jointCardType, setJointCardType, scheduledTransfers, setScheduledTransfers, directDebits, jointBalanceAdjustment, setJointBalanceAdjustment, setJointPartnerName, jointTransactions, setJointTransactions } = usePrototypeNames();
+  const { consumerName, businessName, consumerHomeCurrency, businessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted, jointCardType, setJointCardType, jointCardImg, setJointCardImg, scheduledTransfers, setScheduledTransfers, directDebits, jointBalanceAdjustment, setJointBalanceAdjustment, setJointPartnerName, jointTransactions, setJointTransactions } = usePrototypeNames();
   const { t } = useLanguage();
 
   // Initialise state from the current URL
@@ -910,17 +910,19 @@ function AppInner() {
           inviterAvatarUrl={activeFlow.inviterAvatarUrl}
           userAvatarUrl={avatarUrl}
           onClose={handleCloseFlow}
-          onAccept={(cardType) => {
+          onAccept={(cardType, cardImg) => {
             setHasIncomingInvite(false);
             setJointAccountAccepted(true);
             setJointCardType(cardType);
+            setJointCardImg(cardImg ?? null);
             setJointPartnerName(activeFlow.inviterName);
             handleCloseFlow();
           }}
-          onViewAccount={(cardType) => {
+          onViewAccount={(cardType, cardImg) => {
             setHasIncomingInvite(false);
             setJointAccountAccepted(true);
             setJointCardType(cardType);
+            setJointCardImg(cardImg ?? null);
             setJointPartnerName(activeFlow.inviterName);
             handleCloseFlow();
             setTransitionDirection('push');

@@ -20,19 +20,26 @@ class IllustrationErrorBoundary extends Component<{ children: ReactNode }, { has
 const cardGreenUrl = new URL('../assets/card-green.jpg', import.meta.url).href;
 const cardTapestryUrl = new URL('../assets/card-tapestry.jpg', import.meta.url).href;
 const cardDigitalUrl = new URL('../assets/card-digital.png', import.meta.url).href;
+const cardTapestryOrangeUrl = new URL('../assets/card-tapestry-orange.jpg', import.meta.url).href;
+const cardTapestryGreenUrl = new URL('../assets/card-tapestry-green.jpg', import.meta.url).href;
+const cardV1Url = new URL('../assets/card-v1.png', import.meta.url).href;
+const cardV2Url = new URL('../assets/card-v2.png', import.meta.url).href;
+const cardV3Url = new URL('../assets/card-v3.png', import.meta.url).href;
+const cardV4Url = new URL('../assets/card-v4.png', import.meta.url).href;
+const cardV5Url = new URL('../assets/card-v5.png', import.meta.url).href;
 const swatch1Url = new URL('../assets/swatch-1.png', import.meta.url).href;
 const swatch2Url = new URL('../assets/swatch-2.png', import.meta.url).href;
 const swatch3Url = new URL('../assets/swatch-3.png', import.meta.url).href;
 const swatch4Url = new URL('../assets/swatch-4.png', import.meta.url).href;
 const swatch5Url = new URL('../assets/swatch-5.png', import.meta.url).href;
 
-// 5 digital card variants — images from Figma
+// 5 digital card variants
 const DIGITAL_VARIANTS = [
-  { id: 'v1', cardImg: cardDigitalUrl, swatchImg: swatch1Url, filter: undefined },
-  { id: 'v2', cardImg: cardDigitalUrl, swatchImg: swatch2Url, filter: 'hue-rotate(40deg) saturate(1.1)' },
-  { id: 'v3', cardImg: cardDigitalUrl, swatchImg: swatch3Url, filter: 'hue-rotate(90deg) saturate(1.3)' },
-  { id: 'v4', cardImg: cardDigitalUrl, swatchImg: swatch4Url, filter: 'hue-rotate(195deg) saturate(1.2)' },
-  { id: 'v5', cardImg: cardDigitalUrl, swatchImg: swatch5Url, filter: 'hue-rotate(290deg) saturate(1.3)' },
+  { id: 'v1', cardImg: cardV1Url, swatchImg: swatch1Url, filter: undefined },
+  { id: 'v2', cardImg: cardV2Url, swatchImg: swatch2Url, filter: undefined },
+  { id: 'v3', cardImg: cardV3Url, swatchImg: swatch3Url, filter: undefined },
+  { id: 'v4', cardImg: cardV4Url, swatchImg: swatch4Url, filter: undefined },
+  { id: 'v5', cardImg: cardV5Url, swatchImg: swatch5Url, filter: undefined },
 ] as const;
 
 type DigitalVariantId = typeof DIGITAL_VARIANTS[number]['id'];
@@ -44,8 +51,8 @@ type Props = {
   inviterAvatarUrl: string;
   userAvatarUrl: string;
   onClose: () => void;
-  onAccept?: (cardType: 'digital' | 'physical') => void;
-  onViewAccount?: (cardType: 'digital' | 'physical') => void;
+  onAccept?: (cardType: 'digital' | 'physical', cardImg?: string) => void;
+  onViewAccount?: (cardType: 'digital' | 'physical', cardImg?: string) => void;
   onDecline?: () => void;
   onStepChange?: (step: string) => void;
   accountType: AccountType;
@@ -129,7 +136,7 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, userAvat
   const [nameOnCard, setNameOnCard] = useState<'first-last' | 'last-first'>('first-last');
   const [pin, setPin] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
-  const [digitalVariant, setDigitalVariant] = useState<DigitalVariantId>('v1');
+  const [digitalVariant, setDigitalVariant] = useState<DigitalVariantId | null>(null);
 
   // Derived: name options based on inviterName (split first/last)
   const nameParts = inviterName.trim().split(' ');
@@ -157,15 +164,18 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, userAvat
   // ── SUCCESS ───────────────────────────────────────────────────────────────
   if (screen === 'success') {
     const isDigital = cardType === 'digital';
+    const selectedCardImg = isDigital
+      ? (DIGITAL_VARIANTS.find(v => v.id === digitalVariant) ?? DIGITAL_VARIANTS[0]).cardImg
+      : undefined;
     return (
       <div className="joint-accept card-success--dark">
         <div className="card-success__header">
-          <button className="card-success__close" onClick={() => onAccept?.(cardType!)} type="button" aria-label="Close">
+          <button className="card-success__close" onClick={() => onAccept?.(cardType!, selectedCardImg)} type="button" aria-label="Close">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
             </svg>
           </button>
-          <button className="card-success__skip-btn" onClick={() => onViewAccount?.(cardType!)} type="button">Skip</button>
+          <button className="card-success__skip-btn" onClick={() => onViewAccount?.(cardType!, selectedCardImg)} type="button">Skip</button>
         </div>
 
         <div className="card-success__body">
@@ -188,7 +198,7 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, userAvat
         <div className="card-success__footer">
           <button
             className={`card-success__wallet-btn${isDigital ? '' : ' card-success__wallet-btn--light'}`}
-            onClick={() => onAccept?.(cardType!)}
+            onClick={() => onAccept?.(cardType!, selectedCardImg)}
             type="button"
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -197,7 +207,7 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, userAvat
             </svg>
             Add to Apple Wallet
           </button>
-          <button className="card-success__view-link" onClick={() => onViewAccount?.(cardType!)} type="button">
+          <button className="card-success__view-link" onClick={() => onViewAccount?.(cardType!, selectedCardImg)} type="button">
             View joint account
           </button>
         </div>

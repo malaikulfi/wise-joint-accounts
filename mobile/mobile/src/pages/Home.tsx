@@ -83,7 +83,7 @@ const GROUP_BALANCE = groupTotalBalance;
 type SendAgainRecipient = { name: string; subtitle: string; avatarUrl?: string; hasFastFlag: boolean; badgeFlagCode?: string };
 
 export function Home({ onNavigate, onNavigateAccount, onNavigateCurrency, onNavigateGroupAccount, onNavigateGroupCurrency, onNavigateJarAccount, onNavigateJarCurrency, accountType = 'personal', onAddMoney, onSend, onSendWithCurrency, onSendAgain, onRequest, onPaymentLink, onAccountDetails, pendingJointInviteName, hasIncomingInvite, jointAccountAccepted, jointCardType, onOpenJointInvite, onReviewIncomingInvite, onReviewPendingInvite, onNavigateJointAccount, onJointAccountDetails, onNavigateJointCurrency, jointBalanceAdjustment, jointTransactions }: { onNavigate?: (page: string, push?: boolean) => void; onNavigateAccount?: () => void; onNavigateCurrency?: (code: string) => void; onNavigateGroupAccount?: () => void; onNavigateGroupCurrency?: (code: string) => void; onNavigateJarAccount?: (jarId: string) => void; onNavigateJarCurrency?: (jarId: string, code: string) => void; accountType?: AccountType; onAddMoney?: () => void; onSend?: () => void; onSendWithCurrency?: (sourceCurrency: string, targetCurrency: string, sourceAmount?: string, targetAmount?: string) => void; onSendAgain?: (recipient: SendAgainRecipient, amount?: string) => void; onRequest?: () => void; onPaymentLink?: () => void; onAccountDetails?: () => void; pendingJointInviteName?: string | null; hasIncomingInvite?: boolean; jointAccountAccepted?: boolean; jointCardType?: 'digital' | 'physical' | null; onOpenJointInvite?: () => void; onReviewIncomingInvite?: () => void; onReviewPendingInvite?: () => void; onNavigateJointAccount?: () => void; onJointAccountDetails?: () => void; onNavigateJointCurrency?: (code: string) => void; jointBalanceAdjustment?: number; jointTransactions?: Transaction[] }) {
-  const { consumerName, businessName, consumerHomeCurrency, businessHomeCurrency } = usePrototypeNames();
+  const { consumerName, businessName, consumerHomeCurrency, businessHomeCurrency, jointCardImg } = usePrototypeNames();
   const { t } = useLanguage();
   const txLabels = useTxLabels();
   const rates = usdBaseRates;
@@ -193,9 +193,10 @@ export function Home({ onNavigate, onNavigateAccount, onNavigateCurrency, onNavi
           {jointAccountAccepted && (() => {
             const effectiveCardType = jointCardType ?? 'physical';
             const isDigital = effectiveCardType === 'digital';
-            const jointCardImg = isDigital
-              ? new URL('../assets/card-tapestry-flat.jpg', import.meta.url).href
-              : new URL('../assets/card-green-flat.jpg', import.meta.url).href;
+            const resolvedCardImg = jointCardImg
+              ?? (isDigital
+                ? new URL('../assets/card-v1.png', import.meta.url).href
+                : new URL('../assets/card-green-flat.jpg', import.meta.url).href);
             return (
               <MultiCurrencyAccountCard
                 title="Joint account"
@@ -204,11 +205,11 @@ export function Home({ onNavigate, onNavigateAccount, onNavigateCurrency, onNavi
                 balances={[{ code: 'GBP', amount: `£${(jointBalanceAdjustment ?? 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` }]}
                 hasCards={true}
                 cardCount={1}
+                singleCard={true}
                 onNavigateCards={onNavigate ? () => onNavigate('Cards') : undefined}
                 onNavigateAccount={onNavigateJointAccount}
                 onNavigateCurrency={onNavigateJointCurrency}
-                cardTopImage={jointCardImg}
-                cardBottomImage={jointCardImg}
+                cardTopImage={resolvedCardImg}
                 cardInfoLight={isDigital}
                 currencyData={[]}
                 onAccountDetails={onJointAccountDetails}

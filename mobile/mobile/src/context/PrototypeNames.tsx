@@ -56,6 +56,8 @@ interface PrototypeNamesContextValue {
   setJointAccountAccepted: (val: boolean) => void;
   jointCardType: 'digital' | 'physical' | null;
   setJointCardType: (val: 'digital' | 'physical' | null) => void;
+  jointCardImg: string | null;
+  setJointCardImg: (url: string | null) => void;
   // Scheduled transfers
   scheduledTransfers: ScheduledTransferItem[];
   setScheduledTransfers: (items: ScheduledTransferItem[] | ((prev: ScheduledTransferItem[]) => ScheduledTransferItem[])) => void;
@@ -89,6 +91,8 @@ const PrototypeNamesContext = createContext<PrototypeNamesContextValue>({
   setJointAccountAccepted: () => {},
   jointCardType: 'physical',
   setJointCardType: () => {},
+  jointCardImg: null,
+  setJointCardImg: () => {},
   scheduledTransfers: [],
   setScheduledTransfers: () => {},
   directDebits: [],
@@ -110,6 +114,7 @@ export function PrototypeNamesProvider({ children }: { children: ReactNode }) {
   const [pendingJointInviteName, setPendingJointInviteName] = useState<string | null>(null);
   const [jointAccountAccepted, setJointAccountAccepted] = useState(false);
   const [jointCardType, setJointCardType] = useState<'digital' | 'physical' | null>('physical');
+  const [jointCardImg, setJointCardImg] = useState<string | null>(null);
   const [scheduledTransfers, setScheduledTransfers] = useState<ScheduledTransferItem[]>([]);
   const [directDebits, setDirectDebits] = useState<DirectDebitItem[]>([]);
   const [jointBalanceAdjustment, setJointBalanceAdjustment] = useState(DEFAULT_JOINT_BALANCE);
@@ -126,6 +131,7 @@ export function PrototypeNamesProvider({ children }: { children: ReactNode }) {
       pendingJointInviteName, setPendingJointInviteName,
       jointAccountAccepted, setJointAccountAccepted,
       jointCardType, setJointCardType,
+      jointCardImg, setJointCardImg,
       scheduledTransfers, setScheduledTransfers,
       directDebits, setDirectDebits,
       jointBalanceAdjustment, setJointBalanceAdjustment,
