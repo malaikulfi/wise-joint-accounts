@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { Plus, Money, Savings, Suitcase, Upload, Edit, Document, CrossCircle, Calendar } from '@transferwise/icons';
+import { Plus, Money, Savings, Suitcase, Upload, Edit, Document, CrossCircle, Calendar, DirectDebits } from '@transferwise/icons';
 import { Button, ListItem, SegmentedControl, AvatarLayout, AvatarView } from '@transferwise/components';
 import { Flag } from '@wise/art';
 import type { AccountType } from '../App';
@@ -35,6 +35,7 @@ type Props = {
   balanceAdjustment?: number;
   txList?: Transaction[];
   onViewScheduled?: () => void;
+  onViewDirectDebits?: () => void;
 };
 
 function CurrenciesSection({ onNavigateCurrency, activeCurrencies, isGroup }: { onNavigateCurrency?: (code: string) => void; activeCurrencies: typeof currencies; isGroup?: boolean }) {
@@ -193,9 +194,9 @@ function TeamAvatarMedia() {
   );
 }
 
-function SidebarContent({ onNavigateCards, accountType = 'personal', jar, accountLabel, onViewScheduled }: { onNavigateCards?: () => void; accountType?: AccountType; jar?: string; accountLabel?: string; onViewScheduled?: () => void }) {
+function SidebarContent({ onNavigateCards, accountType = 'personal', jar, accountLabel, onViewScheduled, onViewDirectDebits }: { onNavigateCards?: () => void; accountType?: AccountType; jar?: string; accountLabel?: string; onViewScheduled?: () => void; onViewDirectDebits?: () => void }) {
   const { t } = useLanguage();
-  const { scheduledTransfers } = usePrototypeNames();
+  const { scheduledTransfers, directDebits } = usePrototypeNames();
   const isBusiness = accountType === 'business';
   const isGroup = jar === 'taxes';
   const isJoint = jar === 'joint';
@@ -210,7 +211,7 @@ function SidebarContent({ onNavigateCards, accountType = 'personal', jar, accoun
         control={<ListItem.Navigation onClick={() => onNavigateCards?.()} />}
       />
       {isJoint && (
-        <div style={{ marginTop: 16 }}>
+        <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <ListItem
             spotlight="active"
             title="Scheduled transfers"
@@ -221,6 +222,17 @@ function SidebarContent({ onNavigateCards, accountType = 'personal', jar, accoun
               </ListItem.AvatarView>
             }
             control={<ListItem.Navigation onClick={() => onViewScheduled?.()} />}
+          />
+          <ListItem
+            spotlight="active"
+            title="Direct debits"
+            subtitle={directDebits.length > 0 ? `${directDebits.length} active` : 'No direct debits'}
+            media={
+              <ListItem.AvatarView size={48} style={{ backgroundColor: 'var(--color-background-neutral)', border: 'none' }}>
+                <DirectDebits size={24} />
+              </ListItem.AvatarView>
+            }
+            control={<ListItem.Navigation onClick={() => onViewDirectDebits?.()} />}
           />
         </div>
       )}
@@ -260,7 +272,7 @@ function SidebarContent({ onNavigateCards, accountType = 'personal', jar, accoun
   );
 }
 
-export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountDetails, accountType = 'personal', jar, jarConfig, initialTab, onAdd, onConvert, onSend, onRequest, onPaymentLink, moreMenuOpen, onMoreMenuClose, balanceAdjustment = 0, txList, onViewScheduled }: Props) {
+export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountDetails, accountType = 'personal', jar, jarConfig, initialTab, onAdd, onConvert, onSend, onRequest, onPaymentLink, moreMenuOpen, onMoreMenuClose, balanceAdjustment = 0, txList, onViewScheduled, onViewDirectDebits }: Props) {
   const { consumerName, businessName } = usePrototypeNames();
   const { t } = useLanguage();
   const txLabels = useTxLabels();
@@ -334,7 +346,7 @@ export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountD
 
         {activeTab === 'currencies' && <CurrenciesSection onNavigateCurrency={onNavigateCurrency} activeCurrencies={effectiveCurrencies} isGroup={(isGroup || isJoint) && !isJar} />}
         {activeTab === 'transactions' && <TransactionsSection activeTransactions={activeTransactions} />}
-        {activeTab === 'options' && !isJar && <SidebarContent onNavigateCards={onNavigateCards} accountType={accountType} jar={jar} accountLabel={accountLabel} onViewScheduled={onViewScheduled} />}
+        {activeTab === 'options' && !isJar && <SidebarContent onNavigateCards={onNavigateCards} accountType={accountType} jar={jar} accountLabel={accountLabel} onViewScheduled={onViewScheduled} onViewDirectDebits={onViewDirectDebits} />}
       </div>
     </div>
   );

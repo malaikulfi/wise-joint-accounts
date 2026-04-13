@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { SelectInput, SelectInputOptionContent, SegmentedControl, Field, Input, ListItem, Button, useSnackbar } from '@transferwise/components';
-import { Cross, Sun, Moon, Calendar, Send, Plus, Convert } from '@transferwise/icons';
+import { Cross, Sun, Moon, Calendar, Send, Plus, Convert, DirectDebits } from '@transferwise/icons';
 import { BottomSheet } from './BottomSheet';
 
 const PROMPT_NEW_FLOW = `Build a new interactive flow for this Wise app prototype.
@@ -290,7 +290,7 @@ import { useLiquidGlass } from '../hooks/useLiquidGlass';
 export function PrototypeSettings() {
   const { isScreenModeDark, setScreenMode } = useTheme();
   const createSnackbar = useSnackbar();
-  const { consumerName, setConsumerName, businessName, setBusinessName, consumerHomeCurrency, setConsumerHomeCurrency, businessHomeCurrency, setBusinessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted, jointCardType, setJointCardType, scheduledTransfers, setScheduledTransfers, setJointBalanceAdjustment, setJointPartnerName, setJointTransactions } = usePrototypeNames();
+  const { consumerName, setConsumerName, businessName, setBusinessName, consumerHomeCurrency, setConsumerHomeCurrency, businessHomeCurrency, setBusinessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted, jointCardType, setJointCardType, scheduledTransfers, setScheduledTransfers, directDebits, setDirectDebits, setJointBalanceAdjustment, setJointPartnerName, setJointTransactions } = usePrototypeNames();
   const { language, setLanguage, t } = useLanguage();
 
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -739,8 +739,12 @@ export function PrototypeSettings() {
                   subtitle="Recurring £1,200 rent payment to landlord"
                   control={
                     <Button v2 priority="secondary-neutral" size="sm" onClick={() => {
+                      const logo = (d: string) => `https://img.logo.dev/${d}?token=pk_CkDnlfI6QH-YA3A_mVN8gA&size=128&format=png`;
                       setScheduledTransfers([
                         { id: 'rent-1', recipientName: 'Oliver Bennett', amount: 1200, currency: 'GBP', repeats: 'monthly', nextDate: new Date(2026, 3, 30) },
+                      ]);
+                      setDirectDebits([
+                        { id: 'dd-thames-water', merchantName: 'Thames Water', amount: 42.50, currency: 'GBP', reference: 'Direct Debit', nextDate: new Date(2026, 4, 1), logoSrc: logo('thameswater.co.uk') },
                       ]);
                       setHasIncomingInvite(false);
                       setPendingJointInviteName(null);
@@ -749,7 +753,6 @@ export function PrototypeSettings() {
                       setJointBalanceAdjustment(2000);
                       const partner = 'Sky Dog';
                       setJointPartnerName(partner);
-                      const logo = (d: string) => `https://img.logo.dev/${d}?token=pk_CkDnlfI6QH-YA3A_mVN8gA&size=128&format=png`;
                       setJointTransactions([
                         { name: 'From GBP', subtitle: `Added by ${partner}`, amount: '+800.00 GBP', isPositive: true, icon: <Plus size={24} />, date: 'Today', currency: 'GBP' },
                         { name: 'From GBP', subtitle: 'Moved by you', amount: '+1,200.00 GBP', isPositive: true, icon: <Convert size={24} />, date: '11 Apr', currency: 'GBP' },
@@ -763,6 +766,41 @@ export function PrototypeSettings() {
               </div>
               <div style={{ marginTop: 12 }}>
                 <Button v2 size="sm" priority="secondary" sentiment="negative" block onClick={() => setScheduledTransfers([])}>Reset</Button>
+              </div>
+            </div>
+
+            <hr style={{ border: 'none', borderTop: '1px solid var(--color-border-neutral)', margin: '24px 0' }} />
+
+            {/* Direct Debits */}
+            <div className="fs-sheet__section">
+              <h3 className="np-text-title-body" style={{ margin: '0 0 4px' }}>Direct debits</h3>
+              <p className="np-text-body-default" style={{ margin: '0 0 16px', color: 'var(--color-content-secondary)' }}>
+                {directDebits.length === 0
+                  ? 'No scenario active'
+                  : `Active: ${directDebits.length} direct debit${directDebits.length === 1 ? '' : 's'}`}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <ListItem
+                  media={<ListItem.AvatarView size={40} style={{ background: '#163300', border: 'none', color: '#9fe870' }}><DirectDebits size={24} /></ListItem.AvatarView>}
+                  title={<span className="np-text-body-default" style={{ fontWeight: 600 }}>Thames Water</span>}
+                  subtitle="Monthly £42.50 water bill direct debit"
+                  control={
+                    <Button v2 priority="secondary-neutral" size="sm" onClick={() => {
+                      const logo = (d: string) => `https://img.logo.dev/${d}?token=pk_CkDnlfI6QH-YA3A_mVN8gA&size=128&format=png`;
+                      setScheduledTransfers([
+                        { id: 'rent-1', recipientName: 'Oliver Bennett', amount: 1200, currency: 'GBP', repeats: 'monthly', nextDate: new Date(2026, 3, 30) },
+                      ]);
+                      setDirectDebits([
+                        { id: 'dd-thames-water', merchantName: 'Thames Water', amount: 42.50, currency: 'GBP', reference: 'Direct Debit', nextDate: new Date(2026, 4, 1), logoSrc: logo('thameswater.co.uk') },
+                      ]);
+                      setJointAccountAccepted(true);
+                      setJointCardType('physical');
+                    }}>Set</Button>
+                  }
+                />
+              </div>
+              <div style={{ marginTop: 12 }}>
+                <Button v2 size="sm" priority="secondary" sentiment="negative" block onClick={() => setDirectDebits([])}>Reset</Button>
               </div>
             </div>
 

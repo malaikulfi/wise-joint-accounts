@@ -71,7 +71,7 @@ function SpotlightGrid({ items }: { items: SpotlightItem[] }) {
   );
 }
 
-export function Payments({ accountType = 'personal', onSend, onRequest, onPaymentLink, onAccountDetailsList, onAccountDetailsGroup, onScheduledTransfers, scheduledTransfersCount = 0 }: { accountType?: AccountType; onSend?: () => void; onRequest?: () => void; onPaymentLink?: () => void; onAccountDetailsList?: () => void; onAccountDetailsGroup?: (currencyCodes: string[], jar?: 'joint') => void; onScheduledTransfers?: () => void; scheduledTransfersCount?: number }) {
+export function Payments({ accountType = 'personal', onSend, onRequest, onPaymentLink, onAccountDetailsList, onAccountDetailsGroup, onScheduledTransfers, scheduledTransfersCount = 0, onDirectDebits, directDebitsCount = 0 }: { accountType?: AccountType; onSend?: () => void; onRequest?: () => void; onPaymentLink?: () => void; onAccountDetailsList?: () => void; onAccountDetailsGroup?: (currencyCodes: string[], jar?: 'joint') => void; onScheduledTransfers?: () => void; scheduledTransfersCount?: number; onDirectDebits?: () => void; directDebitsCount?: number }) {
   const { t } = useLanguage();
   const { jointAccountAccepted } = usePrototypeNames();
   const isBusiness = accountType === 'business';
@@ -110,21 +110,25 @@ export function Payments({ accountType = 'personal', onSend, onRequest, onPaymen
         <div className="payments-page__grid">
           {personalSpotlightItems.map((item) => {
             const isScheduled = item.titleKey === 'payments.scheduledTransfers';
-            const onClick = isScheduled ? onScheduledTransfers : undefined;
+            const isDirectDebit = item.titleKey === 'payments.directDebits';
+            const isActive = (isScheduled && scheduledTransfersCount > 0) || (isDirectDebit && directDebitsCount > 0);
+            const onClick = isScheduled ? onScheduledTransfers : isDirectDebit ? onDirectDebits : undefined;
             const subtitle = isScheduled && scheduledTransfersCount > 0
               ? `${scheduledTransfersCount} scheduled`
-              : t(item.subtitleKey);
+              : isDirectDebit && directDebitsCount > 0
+                ? `${directDebitsCount} active`
+                : t(item.subtitleKey);
             return (
               <ListItem
                 key={item.titleKey}
                 title={<span className="np-text-body-large" style={{ fontWeight: 600 }}>{t(item.titleKey)}</span>}
                 subtitle={subtitle}
-                spotlight={isScheduled ? 'active' : 'inactive'}
+                spotlight={isActive ? 'active' : 'inactive'}
                 media={
                   <ListItem.AvatarView
                     size={48}
-                    badge={isScheduled ? undefined : { icon: <Plus size={16} />, type: 'action' as const }}
-                    style={isScheduled
+                    badge={isActive ? undefined : { icon: <Plus size={16} />, type: 'action' as const }}
+                    style={isActive
                       ? { backgroundColor: 'var(--color-background-neutral)', border: 'none' }
                       : { border: 'none', backgroundColor: 'transparent' }}
                   >

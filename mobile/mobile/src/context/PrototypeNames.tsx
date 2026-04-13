@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
+import { Plus, Convert, Send } from '@transferwise/icons';
 import type { Transaction } from '@shared/data/transactions';
 
 export type ScheduledTransferItem = {
@@ -9,6 +10,33 @@ export type ScheduledTransferItem = {
   repeats: 'never' | 'weekly' | 'monthly';
   nextDate: Date;
 };
+
+export type DirectDebitItem = {
+  id: string;
+  merchantName: string;
+  amount: number;
+  currency: string;
+  reference: string;
+  nextDate: Date;
+  logoSrc?: string;
+};
+
+// ─── Joint account defaults ────────────────────────────────────────────────
+const logo = (d: string) =>
+  `https://img.logo.dev/${d}?token=pk_CkDnlfI6QH-YA3A_mVN8gA&size=128&format=png`;
+
+const DEFAULT_JOINT_PARTNER = 'Sky Dog';
+
+const DEFAULT_JOINT_TRANSACTIONS: Transaction[] = [
+  { name: 'From GBP', subtitle: `Added by ${DEFAULT_JOINT_PARTNER}`, amount: '+800.00 GBP', isPositive: true, icon: <Plus size={24} />, date: 'Today', currency: 'GBP' },
+  { name: 'From GBP', subtitle: 'Moved by you', amount: '+1,200.00 GBP', isPositive: true, icon: <Convert size={24} />, date: '11 Apr', currency: 'GBP' },
+  { name: 'Waitrose', subtitle: `Spent by ${DEFAULT_JOINT_PARTNER}`, amount: '-67.43 GBP', isPositive: false, imgSrc: logo('waitrose.com'), date: '9 Apr', currency: 'GBP' },
+  { name: 'Amazon', subtitle: 'Spent by you', amount: '-45.99 GBP', isPositive: false, imgSrc: logo('amazon.co.uk'), date: '8 Apr', currency: 'GBP' },
+  { name: 'Oliver Bennett', subtitle: 'Sent by you', amount: '-1,200.00 GBP', isPositive: false, icon: <Send size={24} />, date: '1 Apr', currency: 'GBP' },
+];
+
+const DEFAULT_JOINT_BALANCE = 2000;
+// ──────────────────────────────────────────────────────────────────────────
 
 interface PrototypeNamesContextValue {
   consumerName: string;
@@ -31,6 +59,9 @@ interface PrototypeNamesContextValue {
   // Scheduled transfers
   scheduledTransfers: ScheduledTransferItem[];
   setScheduledTransfers: (items: ScheduledTransferItem[] | ((prev: ScheduledTransferItem[]) => ScheduledTransferItem[])) => void;
+  // Joint account direct debits
+  directDebits: DirectDebitItem[];
+  setDirectDebits: (items: DirectDebitItem[] | ((prev: DirectDebitItem[]) => DirectDebitItem[])) => void;
   // Joint account balance
   jointBalanceAdjustment: number;
   setJointBalanceAdjustment: (val: number | ((prev: number) => number)) => void;
@@ -56,15 +87,17 @@ const PrototypeNamesContext = createContext<PrototypeNamesContextValue>({
   setPendingJointInviteName: () => {},
   jointAccountAccepted: false,
   setJointAccountAccepted: () => {},
-  jointCardType: null,
+  jointCardType: 'physical',
   setJointCardType: () => {},
   scheduledTransfers: [],
   setScheduledTransfers: () => {},
-  jointBalanceAdjustment: 0,
+  directDebits: [],
+  setDirectDebits: () => {},
+  jointBalanceAdjustment: DEFAULT_JOINT_BALANCE,
   setJointBalanceAdjustment: () => {},
-  jointPartnerName: null,
+  jointPartnerName: DEFAULT_JOINT_PARTNER,
   setJointPartnerName: () => {},
-  jointTransactions: [],
+  jointTransactions: DEFAULT_JOINT_TRANSACTIONS,
   setJointTransactions: () => {},
 });
 
@@ -76,11 +109,12 @@ export function PrototypeNamesProvider({ children }: { children: ReactNode }) {
   const [hasIncomingInvite, setHasIncomingInvite] = useState(false);
   const [pendingJointInviteName, setPendingJointInviteName] = useState<string | null>(null);
   const [jointAccountAccepted, setJointAccountAccepted] = useState(false);
-  const [jointCardType, setJointCardType] = useState<'digital' | 'physical' | null>(null);
+  const [jointCardType, setJointCardType] = useState<'digital' | 'physical' | null>('physical');
   const [scheduledTransfers, setScheduledTransfers] = useState<ScheduledTransferItem[]>([]);
-  const [jointBalanceAdjustment, setJointBalanceAdjustment] = useState(0);
-  const [jointPartnerName, setJointPartnerName] = useState<string | null>(null);
-  const [jointTransactions, setJointTransactions] = useState<Transaction[]>([]);
+  const [directDebits, setDirectDebits] = useState<DirectDebitItem[]>([]);
+  const [jointBalanceAdjustment, setJointBalanceAdjustment] = useState(DEFAULT_JOINT_BALANCE);
+  const [jointPartnerName, setJointPartnerName] = useState<string | null>(DEFAULT_JOINT_PARTNER);
+  const [jointTransactions, setJointTransactions] = useState<Transaction[]>(DEFAULT_JOINT_TRANSACTIONS);
 
   return (
     <PrototypeNamesContext.Provider value={{
@@ -93,6 +127,7 @@ export function PrototypeNamesProvider({ children }: { children: ReactNode }) {
       jointAccountAccepted, setJointAccountAccepted,
       jointCardType, setJointCardType,
       scheduledTransfers, setScheduledTransfers,
+      directDebits, setDirectDebits,
       jointBalanceAdjustment, setJointBalanceAdjustment,
       jointPartnerName, setJointPartnerName,
       jointTransactions, setJointTransactions,

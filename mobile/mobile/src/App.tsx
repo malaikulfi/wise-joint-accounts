@@ -38,6 +38,7 @@ import { JointAccountAcceptFlow } from './flows/JointAccountAcceptFlow';
 import { JointAccountPitch } from './pages/JointAccountPitch';
 import { ScheduledTransfersFlow } from './flows/ScheduledTransfersFlow';
 import { CloseAccountFlow } from './flows/CloseAccountFlow';
+import { DirectDebitsFlow } from './flows/DirectDebitsFlow';
 
 import { useSwipeBack } from './hooks/useSwipeBack';
 import { currencies } from '@shared/data/currencies';
@@ -97,7 +98,8 @@ type ActiveFlow =
   | { type: 'joint-pending'; recipientName: string }
   | { type: 'joint-accept'; screen?: JointAcceptScreen; inviterName: string; inviterAvatarUrl: string }
   | { type: 'scheduled-transfers' }
-  | { type: 'close-account'; accountLabel: string }
+  | { type: 'close-account'; accountLabel: string; balance?: number }
+  | { type: 'direct-debits' }
   | null;
 
 function flowToPath(flow: ActiveFlow): string | null {
@@ -114,6 +116,7 @@ function flowToPath(flow: ActiveFlow): string | null {
     case 'joint-accept': return `/joint-accept/${flow.screen ?? 'pitch'}`;
     case 'scheduled-transfers': return '/scheduled-transfers';
     case 'close-account': return '/close-account';
+    case 'direct-debits': return '/direct-debits';
   }
 }
 
@@ -227,7 +230,7 @@ function stateToPath(navItem: string, subPage: SubPage, accountType: AccountType
 // ── App ─────────────────────────────────────────────────────────────────────
 
 function AppInner() {
-  const { consumerName, businessName, consumerHomeCurrency, businessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted, jointCardType, setJointCardType, scheduledTransfers, setScheduledTransfers, jointBalanceAdjustment, setJointBalanceAdjustment, setJointPartnerName, jointTransactions, setJointTransactions } = usePrototypeNames();
+  const { consumerName, businessName, consumerHomeCurrency, businessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted, jointCardType, setJointCardType, scheduledTransfers, setScheduledTransfers, directDebits, jointBalanceAdjustment, setJointBalanceAdjustment, setJointPartnerName, jointTransactions, setJointTransactions } = usePrototypeNames();
   const { t } = useLanguage();
 
   // Initialise state from the current URL
@@ -622,7 +625,7 @@ function AppInner() {
         return <CurrentAccount onNavigateCurrency={handleNavigateCurrencyFromGroup} onNavigateCards={() => handleNavigate('Cards')} accountType={accountType} jar="taxes" onAdd={() => handleOpenAddMoney('GBP', t('home.taxes'), taxesGroupStyle, { fromCurrency: 'GBP', toCurrency: 'EUR', accountLabel: t('home.taxes'), jar: 'taxes', toAccountLabel: t('home.currentAccount'), accountStyle: taxesGroupStyle, toAccountStyle: currentAccountStyle })} onConvert={() => handleOpenConvert('GBP', 'EUR', t('home.taxes'), 'taxes', t('home.currentAccount'), taxesGroupStyle, currentAccountStyle)} onSend={() => handleOpenSend('GBP', t('home.taxes'), 'taxes', undefined, undefined, undefined, taxesGroupStyle)} onRequest={() => handleOpenRequest('GBP', t('home.taxes'), 'taxes')} onPaymentLink={() => handleOpenPaymentLink('GBP', t('home.taxes'), 'taxes')} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} />;
       }
       if (subPage.type === 'joint-account') {
-        return <CurrentAccount jar="joint" initialTab={subPage.initialTab ?? 'currencies'} onNavigateCurrency={handleNavigateCurrencyFromJointAccount} onNavigateCards={() => handleNavigate('Cards')} onAccountDetails={() => handleNavigateAccountDetailsList('joint-account', ['GBP'])} accountType={accountType} onAdd={() => handleOpenAddMoney('GBP', 'Joint account', jointAccountStyle, { fromCurrency: 'GBP', toCurrency: 'EUR', accountLabel: 'Joint account', toAccountLabel: t('home.currentAccount'), accountStyle: jointAccountStyle, toAccountStyle: currentAccountStyle })} onConvert={() => handleOpenConvert('GBP', 'EUR', 'Joint account', undefined, t('home.currentAccount'), jointAccountStyle, currentAccountStyle)} onSend={() => handleOpenSend('GBP', 'Joint account', undefined, undefined, undefined, undefined, jointAccountStyle)} onRequest={() => handleOpenRequest('GBP', 'Joint account')} onPaymentLink={() => handleOpenPaymentLink('GBP', 'Joint account')} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} balanceAdjustment={jointBalanceAdjustment} txList={jointTransactions} onViewScheduled={() => setActiveFlow({ type: 'scheduled-transfers' })} />;
+        return <CurrentAccount jar="joint" initialTab={subPage.initialTab ?? 'currencies'} onNavigateCurrency={handleNavigateCurrencyFromJointAccount} onNavigateCards={() => handleNavigate('Cards')} onAccountDetails={() => handleNavigateAccountDetailsList('joint-account', ['GBP'])} accountType={accountType} onAdd={() => handleOpenAddMoney('GBP', 'Joint account', jointAccountStyle, { fromCurrency: 'GBP', toCurrency: 'EUR', accountLabel: 'Joint account', toAccountLabel: t('home.currentAccount'), accountStyle: jointAccountStyle, toAccountStyle: currentAccountStyle })} onConvert={() => handleOpenConvert('GBP', 'EUR', 'Joint account', undefined, t('home.currentAccount'), jointAccountStyle, currentAccountStyle)} onSend={() => handleOpenSend('GBP', 'Joint account', undefined, undefined, undefined, undefined, jointAccountStyle)} onRequest={() => handleOpenRequest('GBP', 'Joint account')} onPaymentLink={() => handleOpenPaymentLink('GBP', 'Joint account')} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} balanceAdjustment={jointBalanceAdjustment} txList={jointTransactions} onViewScheduled={() => setActiveFlow({ type: 'scheduled-transfers' })} onViewDirectDebits={() => setActiveFlow({ type: 'direct-debits' })} />;
       }
       if (subPage.type === 'jar-account') {
         const jar = getJar(subPage.jarId);
@@ -677,7 +680,7 @@ function AppInner() {
       case 'Account': return <Account onBack={handleAccountBack} accountType={accountType} onSwitchAccount={handleSwitchAccount} onCloseAccount={handleCloseAccount} />;
       case 'Cards': return <Cards accountType={accountType} />;
       case 'Transactions': return <Transactions accountType={accountType} jointTransactions={jointTransactions} />;
-      case 'Payments': return <Payments accountType={accountType} onSend={() => handleOpenSend(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)} onRequest={() => handleOpenRequest(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)} onPaymentLink={() => handleOpenPaymentLink(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)} onAccountDetailsGroup={(codes, jar) => handleNavigateAccountDetailsList('payments', codes, jar)} onScheduledTransfers={() => setActiveFlow({ type: 'scheduled-transfers' })} scheduledTransfersCount={scheduledTransfers.length} />;
+      case 'Payments': return <Payments accountType={accountType} onSend={() => handleOpenSend(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)} onRequest={() => handleOpenRequest(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)} onPaymentLink={() => handleOpenPaymentLink(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)} onAccountDetailsGroup={(codes, jar) => handleNavigateAccountDetailsList('payments', codes, jar)} onScheduledTransfers={() => setActiveFlow({ type: 'scheduled-transfers' })} scheduledTransfersCount={scheduledTransfers.length} onDirectDebits={() => setActiveFlow({ type: 'direct-debits' })} directDebitsCount={directDebits.length} />;
       case 'Recipients': return <Recipients accountType={accountType} />;
       case 'Insights': return <Insights accountType={accountType} />;
       case 'Team': return <Team />;
@@ -946,9 +949,17 @@ function AppInner() {
           })}
         />
       )}
+      {activeFlow.type === 'direct-debits' && (
+        <DirectDebitsFlow
+          debits={directDebits}
+          onClose={handleCloseFlow}
+        />
+      )}
       {activeFlow.type === 'close-account' && (
         <CloseAccountFlow
           accountLabel={activeFlow.accountLabel}
+          accountType={accountType}
+          balance={activeFlow.balance}
           onClose={handleCloseFlow}
         />
       )}
@@ -1028,7 +1039,7 @@ function AppInner() {
                 <People size={24} />
               </ListItem.AvatarView>
             }
-            control={<ListItem.Navigation onClick={() => { setCloseAccountSelectOpen(false); setTimeout(() => setActiveFlow({ type: 'close-account', accountLabel: 'Joint account' }), 350); }} />}
+            control={<ListItem.Navigation onClick={() => { setCloseAccountSelectOpen(false); setTimeout(() => setActiveFlow({ type: 'close-account', accountLabel: 'Joint account', balance: jointBalanceAdjustment }), 350); }} />}
           />
         </div>
       </BottomSheet>
