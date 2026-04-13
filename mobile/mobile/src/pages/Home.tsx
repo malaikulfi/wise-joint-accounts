@@ -146,7 +146,7 @@ export function Home({ onNavigate, onNavigateAccount, onNavigateCurrency, onNavi
             currencyCount={activeCurrencies.length}
             balances={accountBalances}
             hasCards={true}
-            cardCount={2}
+            cardCount={jointAccountAccepted ? 3 : 2}
             onNavigateCards={onNavigate ? () => onNavigate('Cards') : undefined}
             onNavigateAccount={onNavigateAccount}
             onNavigateCurrency={onNavigateCurrency}
