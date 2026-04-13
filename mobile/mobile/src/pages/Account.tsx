@@ -64,7 +64,7 @@ function getBusinessActionsItems(): MenuItem[] {
   ];
 }
 
-function MenuSection({ title, items, isFirst = false, titleClass, businessName }: { title: string; items: MenuItem[]; isFirst?: boolean; titleClass?: string; businessName?: string }) {
+function MenuSection({ title, items, isFirst = false, titleClass, businessName, onItemClick }: { title: string; items: MenuItem[]; isFirst?: boolean; titleClass?: string; businessName?: string; onItemClick?: (titleKey: TranslationKey) => void }) {
   const { t } = useLanguage();
 
   return (
@@ -89,7 +89,7 @@ function MenuSection({ title, items, isFirst = false, titleClass, businessName }
                   <Icon size={24} />
                 </ListItem.AvatarView>
               }
-              control={<ListItem.Navigation onClick={() => {}} />}
+              control={<ListItem.Navigation onClick={() => onItemClick?.(titleKey)} />}
             />
           );
         })}
@@ -98,7 +98,7 @@ function MenuSection({ title, items, isFirst = false, titleClass, businessName }
   );
 }
 
-export function Account({ onBack, accountType = 'personal', onSwitchAccount }: { onBack?: () => void; accountType?: AccountType; onSwitchAccount?: (type: AccountType) => void }) {
+export function Account({ onBack, accountType = 'personal', onSwitchAccount, onCloseAccount }: { onBack?: () => void; accountType?: AccountType; onSwitchAccount?: (type: AccountType) => void; onCloseAccount?: () => void }) {
   const createSnackbar = useSnackbar();
   const { consumerName, businessName } = usePrototypeNames();
   const { t } = useLanguage();
@@ -206,7 +206,7 @@ export function Account({ onBack, accountType = 'personal', onSwitchAccount }: {
         <div className="account-page__content">
           <MenuSection title={t('account.yourAccount')} items={YOUR_ACCOUNT_ITEMS} isFirst titleClass="np-text-title-section" />
           <MenuSection title={t('account.settings')} items={accountType === 'business' ? BUSINESS_SETTINGS_ITEMS : SETTINGS_ITEMS} />
-          <MenuSection title={t('account.actionsAndAgreements')} items={accountType === 'business' ? getBusinessActionsItems() : ACTIONS_ITEMS} businessName={businessName} />
+          <MenuSection title={t('account.actionsAndAgreements')} items={accountType === 'business' ? getBusinessActionsItems() : ACTIONS_ITEMS} businessName={businessName} onItemClick={(key) => { if (key === 'account.closeAccount') onCloseAccount?.(); }} />
 
           {/* Mobile-only: Log out as ListItem */}
           <div className="account-page__mobile-logout">

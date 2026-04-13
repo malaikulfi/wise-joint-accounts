@@ -30,15 +30,23 @@ const businessReceivableCurrencies: ReceivableCurrency[] = [
   { code: 'HUF', nameKey: 'accountDetailsList.hungarianForint', subtitle: '12600016-19774787-72217791' },
 ];
 
+const jointReceivableCurrencies: ReceivableCurrency[] = [
+  { code: 'GBP', nameKey: 'accountDetailsList.britishPound', subtitle: '23-08-01 \u00B7 60781767' },
+  { code: 'EUR', nameKey: 'accountDetailsList.euro', subtitle: 'BE06 9679 7426 3922' },
+];
+
 type Props = {
   accountType?: AccountType;
+  jar?: 'joint';
   onSelectCurrency: (code: string) => void;
   accountCurrencyCodes?: string[];
 };
 
-export function AccountDetailsList({ accountType = 'personal', onSelectCurrency, accountCurrencyCodes }: Props) {
+export function AccountDetailsList({ accountType = 'personal', jar, onSelectCurrency, accountCurrencyCodes }: Props) {
   const { t } = useLanguage();
-  const allCurrencies = accountType === 'business' ? businessReceivableCurrencies : personalReceivableCurrencies;
+  const allCurrencies = jar === 'joint'
+    ? jointReceivableCurrencies
+    : accountType === 'business' ? businessReceivableCurrencies : personalReceivableCurrencies;
   const currencies = accountCurrencyCodes
     ? allCurrencies.filter((c) => accountCurrencyCodes.includes(c.code))
     : allCurrencies;

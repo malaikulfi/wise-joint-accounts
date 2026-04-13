@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { SnackbarProvider, Loader, ListItem } from '@transferwise/components';
-import { Bank, Receive, Convert, Send } from '@transferwise/icons';
+import { Bank, Receive, Convert, Send, FastFlag, People } from '@transferwise/icons';
 import { type Transaction } from '@shared/data/transactions';
 import { BottomSheet } from './components/BottomSheet';
 import { Agentation } from 'agentation';
@@ -36,6 +36,8 @@ import { JointAccountInviteFlow } from './flows/JointAccountInviteFlow';
 import { JointInvitePendingFlow } from './flows/JointInvitePendingFlow';
 import { JointAccountAcceptFlow } from './flows/JointAccountAcceptFlow';
 import { JointAccountPitch } from './pages/JointAccountPitch';
+import { ScheduledTransfersFlow } from './flows/ScheduledTransfersFlow';
+import { CloseAccountFlow } from './flows/CloseAccountFlow';
 
 import { useSwipeBack } from './hooks/useSwipeBack';
 import { currencies } from '@shared/data/currencies';
@@ -52,7 +54,7 @@ type SubPage =
   | { type: 'jar-account'; jarId: string }
   | { type: 'joint-account'; initialTab?: string }
   | { type: 'currency'; code: string; from?: 'account' | 'home' | 'taxes-account' | 'jar-account' | 'joint-account'; jar?: 'taxes' | 'joint'; jarId?: string }
-  | { type: 'account-details-list'; from: 'account' | 'payments' | 'home' | 'joint-account'; accountCurrencyCodes?: string[] }
+  | { type: 'account-details-list'; from: 'account' | 'payments' | 'home' | 'joint-account'; accountCurrencyCodes?: string[]; jar?: 'joint' }
   | { type: 'account-details'; code: string; from: 'currency' | 'account-details-list' | 'payments'; jar?: 'taxes'; listFrom?: 'account' | 'payments' | 'home' | 'joint-account'; listAccountCurrencyCodes?: string[] }
   | { type: 'get-more' }
   | null;
@@ -94,6 +96,8 @@ type ActiveFlow =
   | { type: 'joint-invite'; step?: 'pitch' | 'select' | 'success' }
   | { type: 'joint-pending'; recipientName: string }
   | { type: 'joint-accept'; screen?: JointAcceptScreen; inviterName: string; inviterAvatarUrl: string }
+  | { type: 'scheduled-transfers' }
+  | { type: 'close-account'; accountLabel: string }
   | null;
 
 function flowToPath(flow: ActiveFlow): string | null {
@@ -108,6 +112,8 @@ function flowToPath(flow: ActiveFlow): string | null {
     case 'joint-invite': return `/joint-invite/${flow.step ?? 'select'}`;
     case 'joint-pending': return '/joint-pending';
     case 'joint-accept': return `/joint-accept/${flow.screen ?? 'pitch'}`;
+    case 'scheduled-transfers': return '/scheduled-transfers';
+    case 'close-account': return '/close-account';
   }
 }
 
@@ -221,7 +227,7 @@ function stateToPath(navItem: string, subPage: SubPage, accountType: AccountType
 // ── App ─────────────────────────────────────────────────────────────────────
 
 function AppInner() {
-  const { consumerName, businessName, consumerHomeCurrency, businessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted, jointCardType, setJointCardType } = usePrototypeNames();
+  const { consumerName, businessName, consumerHomeCurrency, businessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted, jointCardType, setJointCardType, scheduledTransfers, setScheduledTransfers, jointBalanceAdjustment, setJointBalanceAdjustment, setJointPartnerName, jointTransactions, setJointTransactions } = usePrototypeNames();
   const { t } = useLanguage();
 
   // Initialise state from the current URL
@@ -232,11 +238,10 @@ function AppInner() {
   const [accountType, setAccountType] = useState<AccountType>('personal');
   const [activeFlow, setActiveFlow] = useState<ActiveFlow>(null);
   const [addMoneySourceSheet, setAddMoneySourceSheet] = useState<{ defaultCurrency: string; accountLabel: string; accountStyle: AccountStyle; convertParams?: ConvertParams } | null>(null);
-  const [jointBalanceAdjustment, setJointBalanceAdjustment] = useState(0);
-  const [jointTransactions, setJointTransactions] = useState<Transaction[]>([]);
   const [transitionDirection, setTransitionDirection] = useState<'push' | 'pop' | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [switching, setSwitching] = useState(false);
+  const [closeAccountSelectOpen, setCloseAccountSelectOpen] = useState(false);
 
   // Sync URL when state changes (skip when handling popstate)
   const isPopstateRef = useRef(false);
@@ -356,6 +361,10 @@ function AppInner() {
   const handleNavigateJointAccount = useCallback((initialTab?: string) => {
     setTransitionDirection('push');
     setSubPage({ type: 'joint-account', initialTab });
+  }, []);
+
+  const handleCloseAccount = useCallback(() => {
+    setCloseAccountSelectOpen(true);
   }, []);
 
   // Flow overlay animation state
@@ -495,9 +504,9 @@ function AppInner() {
     setSubPage({ type: 'currency', code, from: 'home' });
   }, []);
 
-  const handleNavigateAccountDetailsList = useCallback((from: 'account' | 'payments' | 'home' | 'joint-account', accountCurrencyCodes?: string[]) => {
+  const handleNavigateAccountDetailsList = useCallback((from: 'account' | 'payments' | 'home' | 'joint-account', accountCurrencyCodes?: string[], jar?: 'joint') => {
     setTransitionDirection('push');
-    setSubPage({ type: 'account-details-list', from, accountCurrencyCodes });
+    setSubPage({ type: 'account-details-list', from, accountCurrencyCodes, ...(jar ? { jar } : {}) });
   }, []);
 
   const handleNavigateAccountDetails = useCallback((code: string, from: 'currency' | 'account-details-list' | 'payments', jar?: 'taxes', listFrom?: 'account' | 'payments' | 'home' | 'joint-account', listAccountCurrencyCodes?: string[]) => {
@@ -613,7 +622,7 @@ function AppInner() {
         return <CurrentAccount onNavigateCurrency={handleNavigateCurrencyFromGroup} onNavigateCards={() => handleNavigate('Cards')} accountType={accountType} jar="taxes" onAdd={() => handleOpenAddMoney('GBP', t('home.taxes'), taxesGroupStyle, { fromCurrency: 'GBP', toCurrency: 'EUR', accountLabel: t('home.taxes'), jar: 'taxes', toAccountLabel: t('home.currentAccount'), accountStyle: taxesGroupStyle, toAccountStyle: currentAccountStyle })} onConvert={() => handleOpenConvert('GBP', 'EUR', t('home.taxes'), 'taxes', t('home.currentAccount'), taxesGroupStyle, currentAccountStyle)} onSend={() => handleOpenSend('GBP', t('home.taxes'), 'taxes', undefined, undefined, undefined, taxesGroupStyle)} onRequest={() => handleOpenRequest('GBP', t('home.taxes'), 'taxes')} onPaymentLink={() => handleOpenPaymentLink('GBP', t('home.taxes'), 'taxes')} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} />;
       }
       if (subPage.type === 'joint-account') {
-        return <CurrentAccount jar="joint" initialTab={subPage.initialTab ?? 'currencies'} onNavigateCurrency={handleNavigateCurrencyFromJointAccount} onNavigateCards={() => handleNavigate('Cards')} onAccountDetails={() => handleNavigateAccountDetailsList('joint-account', ['GBP'])} accountType={accountType} onAdd={() => handleOpenAddMoney('GBP', 'Joint account', jointAccountStyle, { fromCurrency: 'GBP', toCurrency: 'EUR', accountLabel: 'Joint account', toAccountLabel: t('home.currentAccount'), accountStyle: jointAccountStyle, toAccountStyle: currentAccountStyle })} onConvert={() => handleOpenConvert('GBP', 'EUR', 'Joint account', undefined, t('home.currentAccount'), jointAccountStyle, currentAccountStyle)} onSend={() => handleOpenSend('GBP', 'Joint account', undefined, undefined, undefined, undefined, jointAccountStyle)} onRequest={() => handleOpenRequest('GBP', 'Joint account')} onPaymentLink={() => handleOpenPaymentLink('GBP', 'Joint account')} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} balanceAdjustment={jointBalanceAdjustment} txList={jointTransactions} />;
+        return <CurrentAccount jar="joint" initialTab={subPage.initialTab ?? 'currencies'} onNavigateCurrency={handleNavigateCurrencyFromJointAccount} onNavigateCards={() => handleNavigate('Cards')} onAccountDetails={() => handleNavigateAccountDetailsList('joint-account', ['GBP'])} accountType={accountType} onAdd={() => handleOpenAddMoney('GBP', 'Joint account', jointAccountStyle, { fromCurrency: 'GBP', toCurrency: 'EUR', accountLabel: 'Joint account', toAccountLabel: t('home.currentAccount'), accountStyle: jointAccountStyle, toAccountStyle: currentAccountStyle })} onConvert={() => handleOpenConvert('GBP', 'EUR', 'Joint account', undefined, t('home.currentAccount'), jointAccountStyle, currentAccountStyle)} onSend={() => handleOpenSend('GBP', 'Joint account', undefined, undefined, undefined, undefined, jointAccountStyle)} onRequest={() => handleOpenRequest('GBP', 'Joint account')} onPaymentLink={() => handleOpenPaymentLink('GBP', 'Joint account')} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} balanceAdjustment={jointBalanceAdjustment} txList={jointTransactions} onViewScheduled={() => setActiveFlow({ type: 'scheduled-transfers' })} />;
       }
       if (subPage.type === 'jar-account') {
         const jar = getJar(subPage.jarId);
@@ -624,7 +633,7 @@ function AppInner() {
       if (subPage.type === 'account-details-list') {
         const acctCurrencies = accountType === 'business' ? businessCurrencies : currencies;
         const currencyCodes = subPage.accountCurrencyCodes ?? acctCurrencies.map(c => c.code);
-        return <AccountDetailsList accountType={accountType} onSelectCurrency={(code) => handleNavigateAccountDetails(code, 'account-details-list', undefined, subPage.from, subPage.accountCurrencyCodes)} accountCurrencyCodes={currencyCodes} />;
+        return <AccountDetailsList accountType={accountType} jar={subPage.jar} onSelectCurrency={(code) => handleNavigateAccountDetails(code, 'account-details-list', undefined, subPage.from, subPage.accountCurrencyCodes)} accountCurrencyCodes={currencyCodes} />;
       }
       if (subPage.type === 'account-details') {
         return <AccountDetailsPage code={subPage.code} accountType={accountType} />;
@@ -665,10 +674,10 @@ function AppInner() {
     }
 
     switch (activeNavItem) {
-      case 'Account': return <Account onBack={handleAccountBack} accountType={accountType} onSwitchAccount={handleSwitchAccount} />;
+      case 'Account': return <Account onBack={handleAccountBack} accountType={accountType} onSwitchAccount={handleSwitchAccount} onCloseAccount={handleCloseAccount} />;
       case 'Cards': return <Cards accountType={accountType} />;
       case 'Transactions': return <Transactions accountType={accountType} jointTransactions={jointTransactions} />;
-      case 'Payments': return <Payments accountType={accountType} onSend={() => handleOpenSend(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)} onRequest={() => handleOpenRequest(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)} onPaymentLink={() => handleOpenPaymentLink(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)} onAccountDetails={(code: string) => handleNavigateAccountDetails(code, 'payments')} onAccountDetailsList={() => handleNavigateAccountDetailsList('payments')} />;
+      case 'Payments': return <Payments accountType={accountType} onSend={() => handleOpenSend(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)} onRequest={() => handleOpenRequest(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)} onPaymentLink={() => handleOpenPaymentLink(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)} onAccountDetailsGroup={(codes, jar) => handleNavigateAccountDetailsList('payments', codes, jar)} onScheduledTransfers={() => setActiveFlow({ type: 'scheduled-transfers' })} scheduledTransfersCount={scheduledTransfers.length} />;
       case 'Recipients': return <Recipients accountType={accountType} />;
       case 'Insights': return <Insights accountType={accountType} />;
       case 'Team': return <Team />;
@@ -736,7 +745,7 @@ function AppInner() {
             const fmt = (n: number) => n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             setJointTransactions(prev => [{
               name: 'Bank transfer',
-              subtitle: 'Added to account',
+              subtitle: 'Added by you',
               amount: `+${fmt(amount)} GBP`,
               isPositive: true,
               icon: <Receive size={24} />,
@@ -813,19 +822,30 @@ function AppInner() {
           startStep={activeFlow.startStep}
           forcedReceiveCurrency={activeFlow.forcedReceiveCurrency}
           forceClose={activeFlow.forceClose}
-          onSuccess={activeFlow.accountLabel === 'Joint account' ? (amount, currency, recipientName, recurring) => {
+          onSuccess={activeFlow.accountLabel === 'Joint account' ? (amount, currency, recipientName, recurring, scheduleDate, scheduleRepeats) => {
             const fmt = (n: number) => n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             setJointBalanceAdjustment(prev => prev - amount);
             setJointTransactions(prev => [{
               name: recipientName,
-              subtitle: recurring ? 'Recurring · Monthly' : 'Payment sent',
+              subtitle: recurring ? 'Recurring · Monthly' : 'Sent by you',
               amount: `-${fmt(amount)} ${currency}`,
               isPositive: false,
               icon: <Send size={24} />,
               date: 'Today',
               currency,
             }, ...prev]);
+            if (scheduleDate) {
+              setScheduledTransfers(prev => [{
+                id: `st-${Date.now()}`,
+                recipientName,
+                amount,
+                currency,
+                repeats: scheduleRepeats ?? 'never',
+                nextDate: scheduleDate,
+              }, ...prev]);
+            }
           } : undefined}
+          onViewScheduled={activeFlow.accountLabel === 'Joint account' ? () => setActiveFlow({ type: 'scheduled-transfers' }) : undefined}
         />
       )}
       {activeFlow.type === 'request' && (
@@ -891,12 +911,14 @@ function AppInner() {
             setHasIncomingInvite(false);
             setJointAccountAccepted(true);
             setJointCardType(cardType);
+            setJointPartnerName(activeFlow.inviterName);
             handleCloseFlow();
           }}
           onViewAccount={(cardType) => {
             setHasIncomingInvite(false);
             setJointAccountAccepted(true);
             setJointCardType(cardType);
+            setJointPartnerName(activeFlow.inviterName);
             handleCloseFlow();
             setTransitionDirection('push');
             setSubPage({ type: 'joint-account', initialTab: 'options' });
@@ -909,6 +931,25 @@ function AppInner() {
             prev?.type === 'joint-accept' ? { ...prev, screen: screen as JointAcceptScreen } : prev
           )}
           accountType={accountType}
+        />
+      )}
+      {activeFlow.type === 'scheduled-transfers' && (
+        <ScheduledTransfersFlow
+          transfers={scheduledTransfers}
+          onClose={handleCloseFlow}
+          onScheduleNew={() => setActiveFlow({
+            type: 'send',
+            defaultCurrency: 'GBP',
+            accountLabel: 'Joint account',
+            accountStyle: jointAccountStyle,
+            startStep: 'recipient',
+          })}
+        />
+      )}
+      {activeFlow.type === 'close-account' && (
+        <CloseAccountFlow
+          accountLabel={activeFlow.accountLabel}
+          onClose={handleCloseFlow}
         />
       )}
     </>
@@ -961,6 +1002,35 @@ function AppInner() {
             />
           </>
         )}
+      </BottomSheet>
+
+      <BottomSheet
+        open={closeAccountSelectOpen}
+        onClose={() => setCloseAccountSelectOpen(false)}
+        title="Close an account"
+      >
+        <div style={{ padding: '0 16px' }}>
+          <ListItem
+            title={<span className="np-text-body-large" style={{ fontWeight: 600 }}>Current account</span>}
+            subtitle="Your personal Wise account"
+            media={
+              <ListItem.AvatarView size={48} style={{ backgroundColor: 'var(--color-interactive-accent)', border: 'none', color: 'var(--color-interactive-control)' }}>
+                <FastFlag size={24} />
+              </ListItem.AvatarView>
+            }
+            control={<ListItem.Navigation onClick={() => { setCloseAccountSelectOpen(false); setTimeout(() => setActiveFlow({ type: 'close-account', accountLabel: 'Current account' }), 350); }} />}
+          />
+          <ListItem
+            title={<span className="np-text-body-large" style={{ fontWeight: 600 }}>Joint account</span>}
+            subtitle="Shared account"
+            media={
+              <ListItem.AvatarView size={48} style={{ backgroundColor: '#0e3d2e', border: 'none', color: '#9fe870' }}>
+                <People size={24} />
+              </ListItem.AvatarView>
+            }
+            control={<ListItem.Navigation onClick={() => { setCloseAccountSelectOpen(false); setTimeout(() => setActiveFlow({ type: 'close-account', accountLabel: 'Joint account' }), 350); }} />}
+          />
+        </div>
       </BottomSheet>
 
       {activeNavItem !== 'Insights' && activeNavItem !== 'Transactions' && activeNavItem !== 'Account' && !subPage && <MobileNav ref={mobileNavRef} activeItem={activeNavItem} onSelect={handleNavigate} />}

@@ -2,13 +2,22 @@ import { useState } from 'react';
 import { ListItem, Button } from '@transferwise/components';
 import {
   DirectDebits, RequestReceive, BillSplit, Calendar, Reload, Plus, AutoConvert, FastFlag, Upload,
-  Bills, Batch, Document, Link as LinkIcon, QrCode, ShoppingBag,
+  Bills, Batch, Document, Link as LinkIcon, QrCode, ShoppingBag, People,
 } from '@transferwise/icons';
-import { Flag } from '@wise/art';
 import type { AccountType } from '../App';
 import { useLanguage } from '../context/Language';
+import { usePrototypeNames } from '../context/PrototypeNames';
 import type { TranslationKey } from '../translations/en';
 import { BottomSheet } from '../components/BottomSheet';
+
+const personalDetailsCurrencies = ['EUR', 'GBP', 'USD', 'CAD', 'TRY', 'HUF'];
+const businessDetailsCurrencies = ['EUR', 'GBP', 'USD', 'SGD', 'TRY', 'HUF'];
+const jointDetailsCurrencies = ['GBP'];
+
+function currencySummary(codes: string[]): string {
+  if (codes.length <= 2) return codes.join(', ');
+  return `${codes[0]}, ${codes[1]} and ${codes.length - 2} more`;
+}
 
 type SpotlightItem = { titleKey: TranslationKey; subtitleKey: TranslationKey; icon: React.ReactNode };
 
@@ -35,17 +44,6 @@ const businessIncomingItems: SpotlightItem[] = [
   { titleKey: 'payments.ecommerce', subtitleKey: 'payments.ecommerceSub', icon: <ShoppingBag size={24} /> },
 ];
 
-const personalAccountDetails = [
-  { currency: 'GBP', titleKey: 'payments.britishPound' as TranslationKey, number: '39215' },
-  { currency: 'USD', titleKey: 'payments.usDollar' as TranslationKey, number: '94826' },
-  { currency: 'EUR', titleKey: 'payments.euro' as TranslationKey, number: '17624' },
-];
-
-const businessAccountDetails = [
-  { currency: 'GBP', titleKey: 'payments.britishPound' as TranslationKey, number: '04736' },
-  { currency: 'USD', titleKey: 'payments.usDollar' as TranslationKey, number: '18365' },
-  { currency: 'EUR', titleKey: 'payments.euro' as TranslationKey, number: '93847' },
-];
 
 function SpotlightGrid({ items }: { items: SpotlightItem[] }) {
   const { t } = useLanguage();
@@ -61,6 +59,7 @@ function SpotlightGrid({ items }: { items: SpotlightItem[] }) {
             <ListItem.AvatarView
               size={48}
               badge={{ icon: <Plus size={16} />, type: 'action' as const }}
+              style={{ border: 'none', backgroundColor: 'transparent' }}
             >
               {item.icon}
             </ListItem.AvatarView>
@@ -72,10 +71,11 @@ function SpotlightGrid({ items }: { items: SpotlightItem[] }) {
   );
 }
 
-export function Payments({ accountType = 'personal', onSend, onRequest, onPaymentLink, onAccountDetails, onAccountDetailsList }: { accountType?: AccountType; onSend?: () => void; onRequest?: () => void; onPaymentLink?: () => void; onAccountDetails?: (code: string) => void; onAccountDetailsList?: () => void }) {
+export function Payments({ accountType = 'personal', onSend, onRequest, onPaymentLink, onAccountDetailsList, onAccountDetailsGroup, onScheduledTransfers, scheduledTransfersCount = 0 }: { accountType?: AccountType; onSend?: () => void; onRequest?: () => void; onPaymentLink?: () => void; onAccountDetailsList?: () => void; onAccountDetailsGroup?: (currencyCodes: string[], jar?: 'joint') => void; onScheduledTransfers?: () => void; scheduledTransfersCount?: number }) {
   const { t } = useLanguage();
+  const { jointAccountAccepted } = usePrototypeNames();
   const isBusiness = accountType === 'business';
-  const accountDetails = isBusiness ? businessAccountDetails : personalAccountDetails;
+  const detailsCurrencies = isBusiness ? businessDetailsCurrencies : personalDetailsCurrencies;
   const [getPaidOpen, setGetPaidOpen] = useState(false);
 
   return (
@@ -108,23 +108,33 @@ export function Payments({ accountType = 'personal', onSend, onRequest, onPaymen
         </>
       ) : (
         <div className="payments-page__grid">
-          {personalSpotlightItems.map((item) => (
-            <ListItem
-              key={item.titleKey}
-              title={<span className="np-text-body-large" style={{ fontWeight: 600 }}>{t(item.titleKey)}</span>}
-              subtitle={t(item.subtitleKey)}
-              spotlight="inactive"
-              media={
-                <ListItem.AvatarView
-                  size={48}
-                  badge={{ icon: <Plus size={16} />, type: 'action' as const }}
-                >
-                  {item.icon}
-                </ListItem.AvatarView>
-              }
-              control={<ListItem.Navigation onClick={() => {}} />}
-            />
-          ))}
+          {personalSpotlightItems.map((item) => {
+            const isScheduled = item.titleKey === 'payments.scheduledTransfers';
+            const onClick = isScheduled ? onScheduledTransfers : undefined;
+            const subtitle = isScheduled && scheduledTransfersCount > 0
+              ? `${scheduledTransfersCount} scheduled`
+              : t(item.subtitleKey);
+            return (
+              <ListItem
+                key={item.titleKey}
+                title={<span className="np-text-body-large" style={{ fontWeight: 600 }}>{t(item.titleKey)}</span>}
+                subtitle={subtitle}
+                spotlight={isScheduled ? 'active' : 'inactive'}
+                media={
+                  <ListItem.AvatarView
+                    size={48}
+                    badge={isScheduled ? undefined : { icon: <Plus size={16} />, type: 'action' as const }}
+                    style={isScheduled
+                      ? { backgroundColor: 'var(--color-background-neutral)', border: 'none' }
+                      : { border: 'none', backgroundColor: 'transparent' }}
+                  >
+                    {item.icon}
+                  </ListItem.AvatarView>
+                }
+                control={<ListItem.Navigation onClick={onClick ?? (() => {})} />}
+              />
+            );
+          })}
         </div>
       )}
 
@@ -157,6 +167,7 @@ export function Payments({ accountType = 'personal', onSend, onRequest, onPaymen
               <ListItem.AvatarView
                 size={48}
                 badge={{ icon: <Plus size={16} />, type: 'action' as const }}
+                style={{ border: 'none', backgroundColor: 'transparent' }}
               >
                 <AutoConvert size={24} />
               </ListItem.AvatarView>
@@ -172,6 +183,7 @@ export function Payments({ accountType = 'personal', onSend, onRequest, onPaymen
                 <ListItem.AvatarView
                   size={48}
                   badge={{ icon: <Plus size={16} />, type: 'action' as const }}
+                  style={{ border: 'none', backgroundColor: 'transparent' }}
                 >
                   <Upload size={24} />
                 </ListItem.AvatarView>
@@ -184,25 +196,32 @@ export function Payments({ accountType = 'personal', onSend, onRequest, onPaymen
 
       {/* Account Details */}
       <div className="payments-page__section">
-        <div className="section-header" style={{ margin: '0 0 12px' }}>
-          <h3 className="np-text-title-subsection" style={{ margin: 0 }}>{t('common.accountDetails')}</h3>
-          <Button v2 size="sm" priority="tertiary" onClick={() => onAccountDetailsList?.()}>{t('common.seeAll')}</Button>
-        </div>
+        <h3 className="np-text-title-subsection" style={{ margin: '0 0 12px' }}>{t('common.accountDetails')}</h3>
         <div className="payments-page__accounts-grid">
-          {accountDetails.map((account) => (
+          <ListItem
+            title={<span className="np-text-body-large" style={{ fontWeight: 600 }}>{t('home.currentAccount')}</span>}
+            subtitle={currencySummary(detailsCurrencies)}
+            spotlight="active"
+            media={
+              <ListItem.AvatarView size={48} style={{ backgroundColor: isBusiness ? '#163300' : 'var(--color-interactive-accent)', border: 'none', color: isBusiness ? '#9fe870' : 'var(--color-interactive-control)' }}>
+                <FastFlag size={24} />
+              </ListItem.AvatarView>
+            }
+            control={<ListItem.Navigation onClick={() => onAccountDetailsGroup?.(detailsCurrencies)} />}
+          />
+          {jointAccountAccepted && !isBusiness && (
             <ListItem
-              key={account.currency}
-              title={<span className="np-text-body-large" style={{ fontWeight: 600 }}>{t(account.titleKey)}</span>}
-              subtitle={t('payments.accountNumberEnding', { number: account.number })}
+              title={<span className="np-text-body-large" style={{ fontWeight: 600 }}>Joint account</span>}
+              subtitle={currencySummary(jointDetailsCurrencies)}
               spotlight="active"
               media={
-                <ListItem.AvatarView size={48}>
-                  <Flag code={account.currency} />
+                <ListItem.AvatarView size={48} style={{ backgroundColor: '#0e3d2e', border: 'none', color: '#9fe870' }}>
+                  <People size={24} />
                 </ListItem.AvatarView>
               }
-              control={<ListItem.Navigation onClick={() => onAccountDetails?.(account.currency)} />}
+              control={<ListItem.Navigation onClick={() => onAccountDetailsGroup?.(jointDetailsCurrencies, 'joint')} />}
             />
-          ))}
+          )}
         </div>
       </div>
 

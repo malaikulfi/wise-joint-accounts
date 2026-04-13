@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { Plus, Money, Savings, Suitcase, Upload, Edit, Document, CrossCircle } from '@transferwise/icons';
+import { Plus, Money, Savings, Suitcase, Upload, Edit, Document, CrossCircle, Calendar } from '@transferwise/icons';
 import { Button, ListItem, SegmentedControl, AvatarLayout, AvatarView } from '@transferwise/components';
 import { Flag } from '@wise/art';
 import type { AccountType } from '../App';
@@ -34,6 +34,7 @@ type Props = {
   onMoreMenuClose?: () => void;
   balanceAdjustment?: number;
   txList?: Transaction[];
+  onViewScheduled?: () => void;
 };
 
 function CurrenciesSection({ onNavigateCurrency, activeCurrencies, isGroup }: { onNavigateCurrency?: (code: string) => void; activeCurrencies: typeof currencies; isGroup?: boolean }) {
@@ -192,10 +193,12 @@ function TeamAvatarMedia() {
   );
 }
 
-function SidebarContent({ onNavigateCards, accountType = 'personal', jar, accountLabel }: { onNavigateCards?: () => void; accountType?: AccountType; jar?: string; accountLabel?: string }) {
+function SidebarContent({ onNavigateCards, accountType = 'personal', jar, accountLabel, onViewScheduled }: { onNavigateCards?: () => void; accountType?: AccountType; jar?: string; accountLabel?: string; onViewScheduled?: () => void }) {
   const { t } = useLanguage();
+  const { scheduledTransfers } = usePrototypeNames();
   const isBusiness = accountType === 'business';
   const isGroup = jar === 'taxes';
+  const isJoint = jar === 'joint';
   const name = accountLabel ?? '';
   return (
     <>
@@ -206,6 +209,21 @@ function SidebarContent({ onNavigateCards, accountType = 'personal', jar, accoun
         media={<SpendCardMedia accountType={accountType} jar={jar} />}
         control={<ListItem.Navigation onClick={() => onNavigateCards?.()} />}
       />
+      {isJoint && (
+        <div style={{ marginTop: 16 }}>
+          <ListItem
+            spotlight="active"
+            title="Scheduled transfers"
+            subtitle={scheduledTransfers.length > 0 ? `${scheduledTransfers.length} scheduled` : 'No scheduled transfers'}
+            media={
+              <ListItem.AvatarView size={48} style={{ backgroundColor: 'var(--color-background-neutral)', border: 'none' }}>
+                <Calendar size={24} />
+              </ListItem.AvatarView>
+            }
+            control={<ListItem.Navigation onClick={() => onViewScheduled?.()} />}
+          />
+        </div>
+      )}
       {isGroup && (
         <div style={{ marginTop: 16 }}>
           <ListItem
@@ -242,7 +260,7 @@ function SidebarContent({ onNavigateCards, accountType = 'personal', jar, accoun
   );
 }
 
-export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountDetails, accountType = 'personal', jar, jarConfig, initialTab, onAdd, onConvert, onSend, onRequest, onPaymentLink, moreMenuOpen, onMoreMenuClose, balanceAdjustment = 0, txList }: Props) {
+export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountDetails, accountType = 'personal', jar, jarConfig, initialTab, onAdd, onConvert, onSend, onRequest, onPaymentLink, moreMenuOpen, onMoreMenuClose, balanceAdjustment = 0, txList, onViewScheduled }: Props) {
   const { consumerName, businessName } = usePrototypeNames();
   const { t } = useLanguage();
   const txLabels = useTxLabels();
@@ -316,7 +334,7 @@ export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountD
 
         {activeTab === 'currencies' && <CurrenciesSection onNavigateCurrency={onNavigateCurrency} activeCurrencies={effectiveCurrencies} isGroup={(isGroup || isJoint) && !isJar} />}
         {activeTab === 'transactions' && <TransactionsSection activeTransactions={activeTransactions} />}
-        {activeTab === 'options' && !isJar && <SidebarContent onNavigateCards={onNavigateCards} accountType={accountType} jar={jar} accountLabel={accountLabel} />}
+        {activeTab === 'options' && !isJar && <SidebarContent onNavigateCards={onNavigateCards} accountType={accountType} jar={jar} accountLabel={accountLabel} onViewScheduled={onViewScheduled} />}
       </div>
     </div>
   );

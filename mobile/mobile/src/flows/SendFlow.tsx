@@ -47,7 +47,8 @@ type Props = {
   accountStyle: AccountStyle;
   onClose: () => void;
   onStepChange?: (step: string) => void;
-  onSuccess?: (amount: number, currency: string, recipientName: string, isRecurring: boolean) => void;
+  onSuccess?: (amount: number, currency: string, recipientName: string, isRecurring: boolean, scheduleDate?: Date | null, scheduleRepeats?: 'never' | 'weekly' | 'monthly') => void;
+  onViewScheduled?: () => void;
   accountType: AccountType;
   avatarUrl: string;
   initials: string;
@@ -75,7 +76,7 @@ const buildCalendarCells = (year: number, month: number): (number | null)[] => {
 };
 const TODAY = new Date(2026, 3, 12); // April 12 2026
 
-export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onClose, onStepChange, onSuccess, accountType, avatarUrl, initials, recipient: initialRecipient, prefillAmount, prefillReceiveAmount, startStep = 'recipient', forcedReceiveCurrency, forceClose }: Props) {
+export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onClose, onStepChange, onSuccess, onViewScheduled, accountType, avatarUrl, initials, recipient: initialRecipient, prefillAmount, prefillReceiveAmount, startStep = 'recipient', forcedReceiveCurrency, forceClose }: Props) {
   const { t } = useLanguage();
   const { consumerName } = usePrototypeNames();
   const rates = useLiveRates();
@@ -496,7 +497,7 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
     if (amount !== null && selectedRecipient) {
       // Snapshot all data the success screen needs before any state changes happen
       successDataRef.current = { amount, currency: sendCurrency, recipientName: selectedRecipient.name, scheduleDate, scheduleRepeats };
-      onSuccess?.(amount, sendCurrency, selectedRecipient.name, scheduleRepeats !== 'never');
+      onSuccess?.(amount, sendCurrency, selectedRecipient.name, scheduleRepeats !== 'never', scheduleDate, scheduleRepeats);
       setStep('success');
     }
   }, [amount, sendCurrency, selectedRecipient, scheduleRepeats, scheduleDate, onSuccess]);
@@ -738,7 +739,7 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
           {successScheduleDate !== null ? (
             <>
               <Button v2 size="lg" priority="primary" block onClick={onClose}>Add money</Button>
-              <Button v2 size="lg" priority="secondary" block onClick={onClose}>View scheduled transfers</Button>
+              <Button v2 size="lg" priority="secondary" block onClick={onViewScheduled ?? onClose}>View scheduled transfers</Button>
             </>
           ) : (
             <Button v2 size="lg" priority="primary" block onClick={onClose}>{t('addMoney.gotIt')}</Button>
@@ -1212,7 +1213,7 @@ export function SendFlow({ defaultCurrency, accountLabel, jar, accountStyle, onC
                     if (isScheduled && amount !== null && selectedRecipient) {
                       // Scheduled payment — skip confirm, go straight to success
                       successDataRef.current = { amount, currency: sendCurrency, recipientName: selectedRecipient.name, scheduleDate, scheduleRepeats };
-                      onSuccess(amount, sendCurrency, selectedRecipient.name, scheduleRepeats !== 'never');
+                      onSuccess(amount, sendCurrency, selectedRecipient.name, scheduleRepeats !== 'never', scheduleDate, scheduleRepeats);
                       setStep('success');
                     } else {
                       setStep('confirm');
