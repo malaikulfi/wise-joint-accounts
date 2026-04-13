@@ -665,27 +665,15 @@ export function PrototypeSettings() {
                   subtitle={t('settings.jointScenario1bSub')}
                   control={
                     <Button v2 priority="secondary-neutral" size="sm" onClick={() => {
-                      const logo = (d: string) => `https://img.logo.dev/${d}?token=pk_CkDnlfI6QH-YA3A_mVN8gA&size=128&format=png`;
                       setHasIncomingInvite(true);
                       setPendingJointInviteName(null);
                       setJointAccountAccepted(false);
                       setJointCardType('physical');
-                      setJointBalanceAdjustment(2000);
-                      const partner = 'Sky Dog';
-                      setJointPartnerName(partner);
-                      setJointTransactions([
-                        { name: 'From GBP', subtitle: `Added by ${partner}`, amount: '+800.00 GBP', isPositive: true, icon: <Plus size={24} />, date: 'Today', currency: 'GBP' },
-                        { name: 'From GBP', subtitle: 'Moved by you', amount: '+1,200.00 GBP', isPositive: true, icon: <Convert size={24} />, date: '11 Apr', currency: 'GBP' },
-                        { name: 'Waitrose', subtitle: `Spent by ${partner}`, amount: '-67.43 GBP', isPositive: false, imgSrc: logo('waitrose.com'), date: '9 Apr', currency: 'GBP' },
-                        { name: 'Amazon', subtitle: 'Spent by you', amount: '-45.99 GBP', isPositive: false, imgSrc: logo('amazon.co.uk'), date: '8 Apr', currency: 'GBP' },
-                        { name: 'Oliver Bennett', subtitle: 'Sent by you', amount: '-1,200.00 GBP', isPositive: false, icon: <Send size={24} />, date: '1 Apr', currency: 'GBP' },
-                      ]);
-                      setScheduledTransfers([
-                        { id: 'rent-1', recipientName: 'Oliver Bennett', amount: 1200, currency: 'GBP', repeats: 'monthly', nextDate: new Date(2026, 3, 30) },
-                      ]);
-                      setDirectDebits([
-                        { id: 'dd-thames-water', merchantName: 'Thames Water', amount: 42.50, currency: 'GBP', reference: 'Direct Debit', nextDate: new Date(2026, 4, 1), logoSrc: logo('thameswater.co.uk') },
-                      ]);
+                      setJointBalanceAdjustment(0);
+                      setJointPartnerName('Sky Dog');
+                      setJointTransactions([]);
+                      setScheduledTransfers([]);
+                      setDirectDebits([]);
                     }}>Set</Button>
                   }
                 />
@@ -708,27 +696,15 @@ export function PrototypeSettings() {
                   subtitle={t('settings.jointScenarioAcceptedPhysicalSub')}
                   control={
                     <Button v2 priority="secondary-neutral" size="sm" onClick={() => {
-                      const logo = (d: string) => `https://img.logo.dev/${d}?token=pk_CkDnlfI6QH-YA3A_mVN8gA&size=128&format=png`;
                       setHasIncomingInvite(false);
                       setPendingJointInviteName(null);
                       setJointAccountAccepted(true);
                       setJointCardType('physical');
-                      setJointBalanceAdjustment(2000);
-                      const partner = 'Sky Dog';
-                      setJointPartnerName(partner);
-                      setJointTransactions([
-                        { name: 'From GBP', subtitle: `Added by ${partner}`, amount: '+800.00 GBP', isPositive: true, icon: <Plus size={24} />, date: 'Today', currency: 'GBP' },
-                        { name: 'From GBP', subtitle: 'Moved by you', amount: '+1,200.00 GBP', isPositive: true, icon: <Convert size={24} />, date: '11 Apr', currency: 'GBP' },
-                        { name: 'Waitrose', subtitle: `Spent by ${partner}`, amount: '-67.43 GBP', isPositive: false, imgSrc: logo('waitrose.com'), date: '9 Apr', currency: 'GBP' },
-                        { name: 'Amazon', subtitle: 'Spent by you', amount: '-45.99 GBP', isPositive: false, imgSrc: logo('amazon.co.uk'), date: '8 Apr', currency: 'GBP' },
-                        { name: 'Oliver Bennett', subtitle: 'Sent by you', amount: '-1,200.00 GBP', isPositive: false, icon: <Send size={24} />, date: '1 Apr', currency: 'GBP' },
-                      ]);
-                      setScheduledTransfers([
-                        { id: 'rent-1', recipientName: 'Oliver Bennett', amount: 1200, currency: 'GBP', repeats: 'monthly', nextDate: new Date(2026, 3, 30) },
-                      ]);
-                      setDirectDebits([
-                        { id: 'dd-thames-water', merchantName: 'Thames Water', amount: 42.50, currency: 'GBP', reference: 'Direct Debit', nextDate: new Date(2026, 4, 1), logoSrc: logo('thameswater.co.uk') },
-                      ]);
+                      setJointBalanceAdjustment(0);
+                      setJointPartnerName('Sky Dog');
+                      setJointTransactions([]);
+                      setScheduledTransfers([]);
+                      setDirectDebits([]);
                     }}>Set</Button>
                   }
                 />
