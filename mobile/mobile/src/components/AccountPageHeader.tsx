@@ -95,11 +95,20 @@ export function AccountPageHeader({
         <div className="account-header__identity">
           {members && members.length >= 2 ? (
             <span className="account-header__avatar-mobile">
-              <AvatarLayout
-                size={48}
-                orientation="diagonal"
-                avatars={members.map((m) => ({ imgSrc: m.avatarUrl }))}
-              />
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                {members.map((m, i) => (
+                  <img
+                    key={i}
+                    src={m.avatarUrl}
+                    style={{
+                      width: 48, height: 48, borderRadius: '50%', objectFit: 'cover',
+                      border: '2px solid var(--color-background-screen)',
+                      marginLeft: i > 0 ? -10 : 0,
+                    }}
+                    alt=""
+                  />
+                ))}
+              </div>
             </span>
           ) : type === 'currency' && currencyCode ? (
             <span className="account-header__avatar-mobile">

@@ -158,11 +158,20 @@ export function MultiCurrencyAccountCard({
                   style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
                   onClick={() => onNavigateAccount?.()}
                 >
-                  <AvatarLayout
-                    size={40}
-                    orientation="diagonal"
-                    avatars={members.map((m) => ({ imgSrc: m.avatarUrl }))}
-                  />
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    {members.map((m, i) => (
+                      <img
+                        key={i}
+                        src={m.avatarUrl}
+                        style={{
+                          width: 32, height: 32, borderRadius: '50%', objectFit: 'cover',
+                          border: '2px solid var(--color-background-screen)',
+                          marginLeft: i > 0 ? -8 : 0,
+                        }}
+                        alt=""
+                      />
+                    ))}
+                  </div>
                   <ChevronRight size={16} style={{ color: 'var(--color-content-secondary)', flexShrink: 0 }} />
                 </div>
               ) : (
