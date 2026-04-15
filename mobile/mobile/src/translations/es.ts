@@ -356,6 +356,8 @@ const es: Translations = {
   'currentAccount.editCurrentAccount': 'Editar cuenta corriente',
   'currentAccount.editGroup': 'Editar grupo',
   'currentAccount.closeGroup': 'Cerrar grupo',
+  'currentAccount.editJointAccount': 'Editar cuenta conjunta',
+  'currentAccount.closeJointAccount': 'Cerrar cuenta conjunta',
   'currentAccount.editJar': 'Editar tarro',
   'currentAccount.closeJar': 'Cerrar tarro',
   'currentAccount.investedInInterest': 'Invertido en Intereses',

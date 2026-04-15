@@ -230,7 +230,7 @@ function stateToPath(navItem: string, subPage: SubPage, accountType: AccountType
 // ── App ─────────────────────────────────────────────────────────────────────
 
 function AppInner() {
-  const { consumerName, businessName, consumerHomeCurrency, businessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted, jointCardType, setJointCardType, jointCardImg, setJointCardImg, scheduledTransfers, setScheduledTransfers, directDebits, jointBalanceAdjustment, setJointBalanceAdjustment, setJointPartnerName, jointTransactions, setJointTransactions } = usePrototypeNames();
+  const { consumerName, businessName, consumerHomeCurrency, businessHomeCurrency, hasIncomingInvite, setHasIncomingInvite, pendingJointInviteName, setPendingJointInviteName, jointAccountAccepted, setJointAccountAccepted, jointCardType, setJointCardType, jointCardImg, setJointCardImg, scheduledTransfers, setScheduledTransfers, directDebits, jointBalanceAdjustment, setJointBalanceAdjustment, setJointPartnerName, jointTransactions, setJointTransactions, setRecentPersonalTransactions, savingsTransactions, setSavingsTransactions, savingsBalanceAdjustment, setSavingsBalanceAdjustment } = usePrototypeNames();
   const { t } = useLanguage();
 
   // Initialise state from the current URL
@@ -245,6 +245,7 @@ function AppInner() {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [switching, setSwitching] = useState(false);
   const [closeAccountSelectOpen, setCloseAccountSelectOpen] = useState(false);
+  const [cardsInitialIndex, setCardsInitialIndex] = useState(1);
 
   // Sync URL when state changes (skip when handling popstate)
   const isPopstateRef = useRef(false);
@@ -433,6 +434,11 @@ function AppInner() {
     if (!push) resetScroll();
   }, [activeNavItem]);
 
+  const handleNavigateToCards = useCallback((cardIndex: number) => {
+    setCardsInitialIndex(cardIndex);
+    handleNavigate('Cards');
+  }, [handleNavigate]);
+
   const MOBILE_NAV_TABS = ['Home', 'Cards', 'Recipients', 'Payments'];
   const handleNavigateAnimated = useCallback((label: string, push?: boolean) => {
     if (!push && mobileNavRef.current && MOBILE_NAV_TABS.includes(label)) {
@@ -599,7 +605,7 @@ function AppInner() {
   const renderContent = () => {
     if (subPage) {
       if (subPage.type === 'get-more') {
-        return <GetMoreFromWise onClose={() => { setTransitionDirection('pop'); setSubPage(null); }} onOpenJointPitch={() => setActiveFlow({ type: 'joint-invite', step: 'pitch' })} pendingInviteName={pendingJointInviteName} jointAccountAccepted={jointAccountAccepted} />;
+        return <GetMoreFromWise onClose={() => { setTransitionDirection('pop'); setSubPage(null); }} onOpenJointPitch={() => setActiveFlow({ type: 'joint-invite', step: 'pitch' })} onOpenJointPending={pendingJointInviteName ? () => setActiveFlow({ type: 'joint-pending', recipientName: pendingJointInviteName }) : undefined} pendingInviteName={pendingJointInviteName} jointAccountAccepted={jointAccountAccepted} />;
       }
       if (subPage.type === 'joint-invite') {
         return (
@@ -625,13 +631,13 @@ function AppInner() {
         return <CurrentAccount onNavigateCurrency={handleNavigateCurrencyFromGroup} onNavigateCards={() => handleNavigate('Cards')} accountType={accountType} jar="taxes" onAdd={() => handleOpenAddMoney('GBP', t('home.taxes'), taxesGroupStyle, { fromCurrency: 'GBP', toCurrency: 'EUR', accountLabel: t('home.taxes'), jar: 'taxes', toAccountLabel: t('home.currentAccount'), accountStyle: taxesGroupStyle, toAccountStyle: currentAccountStyle })} onConvert={() => handleOpenConvert('GBP', 'EUR', t('home.taxes'), 'taxes', t('home.currentAccount'), taxesGroupStyle, currentAccountStyle)} onSend={() => handleOpenSend('GBP', t('home.taxes'), 'taxes', undefined, undefined, undefined, taxesGroupStyle)} onRequest={() => handleOpenRequest('GBP', t('home.taxes'), 'taxes')} onPaymentLink={() => handleOpenPaymentLink('GBP', t('home.taxes'), 'taxes')} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} />;
       }
       if (subPage.type === 'joint-account') {
-        return <CurrentAccount jar="joint" initialTab={subPage.initialTab ?? 'currencies'} onNavigateCurrency={handleNavigateCurrencyFromJointAccount} onNavigateCards={() => handleNavigate('Cards')} onAccountDetails={() => handleNavigateAccountDetailsList('joint-account', ['GBP'])} accountType={accountType} onAdd={() => handleOpenAddMoney('GBP', 'Joint account', jointAccountStyle, { fromCurrency: 'GBP', toCurrency: 'EUR', accountLabel: 'Joint account', toAccountLabel: t('home.currentAccount'), accountStyle: jointAccountStyle, toAccountStyle: currentAccountStyle })} onConvert={() => handleOpenConvert('GBP', 'EUR', 'Joint account', undefined, t('home.currentAccount'), jointAccountStyle, currentAccountStyle)} onSend={() => handleOpenSend('GBP', 'Joint account', undefined, undefined, undefined, undefined, jointAccountStyle)} onRequest={() => handleOpenRequest('GBP', 'Joint account')} onPaymentLink={() => handleOpenPaymentLink('GBP', 'Joint account')} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} balanceAdjustment={jointBalanceAdjustment} txList={jointTransactions} onViewScheduled={() => setActiveFlow({ type: 'scheduled-transfers' })} onViewDirectDebits={() => setActiveFlow({ type: 'direct-debits' })} />;
+        return <CurrentAccount jar="joint" initialTab={subPage.initialTab ?? 'currencies'} onNavigateCurrency={handleNavigateCurrencyFromJointAccount} onNavigateCards={() => handleNavigate('Cards')} onAccountDetails={() => handleNavigateAccountDetailsList('joint-account', ['GBP'])} accountType={accountType} onAdd={() => handleOpenAddMoney('GBP', 'Joint account', jointAccountStyle, { fromCurrency: 'GBP', toCurrency: 'EUR', accountLabel: 'Joint account', toAccountLabel: t('home.currentAccount'), accountStyle: jointAccountStyle, toAccountStyle: currentAccountStyle })} onConvert={() => handleOpenConvert('GBP', 'EUR', 'Joint account', undefined, t('home.currentAccount'), jointAccountStyle, currentAccountStyle)} onSend={() => handleOpenSend('GBP', 'Joint account', undefined, undefined, undefined, undefined, jointAccountStyle)} onRequest={() => handleOpenRequest('GBP', 'Joint account')} onPaymentLink={() => handleOpenPaymentLink('GBP', 'Joint account')} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} balanceAdjustment={jointBalanceAdjustment} txList={jointTransactions} onViewScheduled={() => setActiveFlow({ type: 'scheduled-transfers' })} onViewDirectDebits={() => setActiveFlow({ type: 'direct-debits' })} onCloseJointAccount={() => setTimeout(() => setActiveFlow({ type: 'close-account', accountLabel: 'Joint account', balance: jointBalanceAdjustment }), 350)} />;
       }
       if (subPage.type === 'jar-account') {
         const jar = getJar(subPage.jarId);
         if (!jar) return <div>Jar not found.</div>;
         const jarName = t(jar.nameKey);
-        return <CurrentAccount onNavigateCurrency={(code) => handleNavigateCurrencyFromJar(subPage.jarId, code)} accountType={accountType} jar={subPage.jarId} jarConfig={jar} onAdd={() => handleOpenAddMoney(jar.currencies[0]?.code ?? 'GBP', jarName, jarStyle(jar), { fromCurrency: jar.currencies[0]?.code ?? 'GBP', toCurrency: 'EUR', accountLabel: jarName, toAccountLabel: t('home.currentAccount'), accountStyle: jarStyle(jar), toAccountStyle: currentAccountStyle, jarId: jar.id })} onConvert={() => handleOpenConvert(jar.currencies[0]?.code ?? 'GBP', 'EUR', jarName, undefined, t('home.currentAccount'), jarStyle(jar), currentAccountStyle, jar.id)} onSend={() => handleOpenSend(jar.currencies[0]?.code ?? 'GBP', jarName, undefined, undefined, undefined, undefined, jarStyle(jar))} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} />;
+        return <CurrentAccount onNavigateCurrency={(code) => handleNavigateCurrencyFromJar(subPage.jarId, code)} accountType={accountType} jar={subPage.jarId} jarConfig={jar} onAdd={() => handleOpenAddMoney(jar.currencies[0]?.code ?? 'GBP', jarName, jarStyle(jar), { fromCurrency: jar.currencies[0]?.code ?? 'GBP', toCurrency: 'EUR', accountLabel: jarName, toAccountLabel: t('home.currentAccount'), accountStyle: jarStyle(jar), toAccountStyle: currentAccountStyle, jarId: jar.id })} onConvert={() => handleOpenConvert(jar.currencies[0]?.code ?? 'GBP', 'EUR', jarName, undefined, t('home.currentAccount'), jarStyle(jar), currentAccountStyle, jar.id)} onSend={() => handleOpenSend(jar.currencies[0]?.code ?? 'GBP', jarName, undefined, undefined, undefined, undefined, jarStyle(jar))} moreMenuOpen={showMoreMenu} onMoreMenuClose={() => setShowMoreMenu(false)} balanceAdjustment={subPage.jarId === GROUP_IDS.savings ? savingsBalanceAdjustment : undefined} txList={subPage.jarId === GROUP_IDS.savings ? savingsTransactions : undefined} />;
       }
       if (subPage.type === 'account-details-list') {
         const acctCurrencies = accountType === 'business' ? businessCurrencies : currencies;
@@ -639,7 +645,7 @@ function AppInner() {
         return <AccountDetailsList accountType={accountType} jar={subPage.jar} onSelectCurrency={(code) => handleNavigateAccountDetails(code, 'account-details-list', undefined, subPage.from, subPage.accountCurrencyCodes)} accountCurrencyCodes={currencyCodes} />;
       }
       if (subPage.type === 'account-details') {
-        return <AccountDetailsPage code={subPage.code} accountType={accountType} />;
+        return <AccountDetailsPage code={subPage.code} accountType={accountType} isJoint={subPage.listFrom === 'joint-account'} />;
       }
       if (subPage.type === 'currency') {
         const jarDef = subPage.jarId ? getJar(subPage.jarId) : undefined;
@@ -669,8 +675,8 @@ function AppInner() {
             onPaymentLink={isJar ? undefined : () => handleOpenPaymentLink(subPage.code, jarLabel, isJointCurrency ? undefined : subPage.jar as 'taxes' | undefined)}
             moreMenuOpen={showMoreMenu}
             onMoreMenuClose={() => setShowMoreMenu(false)}
-            balanceAdjustment={isJointCurrency ? jointBalanceAdjustment : undefined}
-            txList={isJointCurrency ? jointTransactions : undefined}
+            balanceAdjustment={isJointCurrency ? jointBalanceAdjustment : jarDef?.id === GROUP_IDS.savings ? savingsBalanceAdjustment : undefined}
+            txList={isJointCurrency ? jointTransactions : jarDef?.id === GROUP_IDS.savings ? savingsTransactions : undefined}
           />
         );
       }
@@ -678,7 +684,7 @@ function AppInner() {
 
     switch (activeNavItem) {
       case 'Account': return <Account onBack={handleAccountBack} accountType={accountType} onSwitchAccount={handleSwitchAccount} onCloseAccount={handleCloseAccount} />;
-      case 'Cards': return <Cards accountType={accountType} />;
+      case 'Cards': return <Cards accountType={accountType} initialSelectedIndex={cardsInitialIndex} />;
       case 'Transactions': return <Transactions accountType={accountType} jointTransactions={jointTransactions} />;
       case 'Payments': return <Payments accountType={accountType} onSend={() => handleOpenSend(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)} onRequest={() => handleOpenRequest(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)} onPaymentLink={() => handleOpenPaymentLink(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)} onAccountDetailsGroup={(codes, jar) => handleNavigateAccountDetailsList('payments', codes, jar)} onScheduledTransfers={() => setActiveFlow({ type: 'scheduled-transfers' })} scheduledTransfersCount={scheduledTransfers.length} onDirectDebits={() => setActiveFlow({ type: 'direct-debits' })} directDebitsCount={directDebits.length} />;
       case 'Recipients': return <Recipients accountType={accountType} />;
@@ -718,11 +724,12 @@ function AppInner() {
           onRequest={() => handleOpenRequest(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)}
           onPaymentLink={() => handleOpenPaymentLink(accountType === 'business' ? businessHomeCurrency : consumerHomeCurrency)}
           onAccountDetails={() => handleNavigateAccountDetailsList('home')}
+          onNavigateToCards={handleNavigateToCards}
           pendingJointInviteName={pendingJointInviteName}
           hasIncomingInvite={hasIncomingInvite}
           jointAccountAccepted={jointAccountAccepted}
           jointCardType={jointCardType}
-          onOpenJointInvite={handleOpenJointInvite}
+          onOpenJointInvite={handleOpenGetMore}
           onReviewIncomingInvite={() => handleOpenJointAccept('Sky Dog', 'https://www.tapback.co/api/avatar/sky-dog.webp')}
           onReviewPendingInvite={() => pendingJointInviteName && setActiveFlow({ type: 'joint-pending', recipientName: pendingJointInviteName })}
           onNavigateJointAccount={() => handleNavigateJointAccount('currencies')}
@@ -778,7 +785,7 @@ function AppInner() {
               setJointBalanceAdjustment(prev => prev + toAmt);
               const isSameCurrency = fromCur === toCur;
               setJointTransactions(prev => [{
-                name: isSameCurrency ? 'Transfer in' : `From ${fromCur}`,
+                name: isSameCurrency ? `To ${toLabel}` : `To ${toCur}`,
                 subtitle: 'Moved by you',
                 amount: `+${fmt(toAmt)} GBP`,
                 isPositive: true,
@@ -787,12 +794,21 @@ function AppInner() {
                 currency: 'GBP',
                 ...(!isSameCurrency ? { conversion: { fromCurrency: fromCur, toCurrency: toCur, fromAmount: `${fmt(fromAmt)} ${fromCur}`, toAmount: `${fmt(toAmt)} ${toCur}` } } : {}),
               }, ...prev]);
+              setRecentPersonalTransactions(prev => [{
+                name: `To ${toLabel}`,
+                subtitle: 'Moved by you',
+                amount: `-${fmt(fromAmt)} ${fromCur}`,
+                isPositive: false,
+                icon: <Convert size={24} />,
+                date: 'Today',
+                currency: fromCur,
+              }, ...prev]);
             }
             if (fromLabel === 'Joint account' && fromCur === 'GBP') {
               setJointBalanceAdjustment(prev => prev - fromAmt);
               const isSameCurrency = fromCur === toCur;
               setJointTransactions(prev => [{
-                name: isSameCurrency ? 'Transfer out' : `To ${toCur}`,
+                name: isSameCurrency ? `To ${toLabel}` : `To ${toCur}`,
                 subtitle: 'Moved by you',
                 amount: `-${fmt(fromAmt)} GBP`,
                 isPositive: false,
@@ -800,6 +816,59 @@ function AppInner() {
                 date: 'Today',
                 currency: 'GBP',
                 ...(!isSameCurrency ? { conversion: { fromCurrency: fromCur, toCurrency: toCur, fromAmount: `${fmt(fromAmt)} ${fromCur}`, toAmount: `${fmt(toAmt)} ${toCur}` } } : {}),
+              }, ...prev]);
+              setRecentPersonalTransactions(prev => [{
+                name: `From ${fromLabel}`,
+                subtitle: 'Moved by you',
+                amount: `+${fmt(toAmt)} ${toCur}`,
+                isPositive: true,
+                icon: <Convert size={24} />,
+                date: 'Today',
+                currency: toCur,
+              }, ...prev]);
+            }
+            const savingsLabel = t('home.savings');
+            if (toLabel === savingsLabel) {
+              setSavingsBalanceAdjustment(prev => prev + toAmt);
+              const isSameCurrency = fromCur === toCur;
+              setSavingsTransactions(prev => [{
+                name: `To ${toLabel}`,
+                subtitle: 'Moved by you',
+                amount: `+${fmt(toAmt)} ${toCur}`,
+                isPositive: true,
+                icon: <Convert size={24} />,
+                date: 'Today',
+                currency: toCur,
+              }, ...prev]);
+              setRecentPersonalTransactions(prev => [{
+                name: `To ${toLabel}`,
+                subtitle: 'Moved by you',
+                amount: `-${fmt(fromAmt)} ${fromCur}`,
+                isPositive: false,
+                icon: <Convert size={24} />,
+                date: 'Today',
+                currency: fromCur,
+              }, ...prev]);
+            }
+            if (fromLabel === savingsLabel) {
+              setSavingsBalanceAdjustment(prev => prev - fromAmt);
+              setSavingsTransactions(prev => [{
+                name: `To ${toLabel}`,
+                subtitle: 'Moved by you',
+                amount: `-${fmt(fromAmt)} ${fromCur}`,
+                isPositive: false,
+                icon: <Convert size={24} />,
+                date: 'Today',
+                currency: fromCur,
+              }, ...prev]);
+              setRecentPersonalTransactions(prev => [{
+                name: `From ${fromLabel}`,
+                subtitle: 'Moved by you',
+                amount: `+${fmt(toAmt)} ${toCur}`,
+                isPositive: true,
+                icon: <Convert size={24} />,
+                date: 'Today',
+                currency: toCur,
               }, ...prev]);
             }
           }}

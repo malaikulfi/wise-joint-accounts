@@ -329,6 +329,7 @@ export function TransferCalculator({ onSend }: { onSend?: (sourceCurrency: strin
         />
         {activeIndex !== null && rateData[activeIndex] && (
           <ReferenceLine
+            key={`ref-${activeIndex}`}
             x={rateData[activeIndex].date}
             stroke="var(--color-border-neutral)"
             strokeDasharray="3 3"

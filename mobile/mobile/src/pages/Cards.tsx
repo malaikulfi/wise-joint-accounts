@@ -39,7 +39,7 @@ function QrCard() {
   );
 }
 
-function CardCarousel({ cards, selectedIndex, onSelect, hasQr }: { cards: CardInfo[]; selectedIndex: number; onSelect: (i: number) => void; hasQr?: boolean }) {
+function CardCarousel({ cards, selectedIndex, onSelect, hasQr, initialIndex }: { cards: CardInfo[]; selectedIndex: number; onSelect: (i: number) => void; hasQr?: boolean; initialIndex?: number }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const totalCount = (hasQr ? 1 : 0) + cards.length;
   const lastIndexRef = useRef(selectedIndex);
@@ -125,17 +125,18 @@ function CardCarousel({ cards, selectedIndex, onSelect, hasQr }: { cards: CardIn
     };
   }, [checkIndex]);
 
-  // Start scrolled to first real card (skip QR)
+  // Scroll to initial index (or first real card if no index given)
   useEffect(() => {
     if (!hasQr) return;
     const el = scrollRef.current;
     if (!el) return;
     const children = Array.from(el.children) as HTMLElement[];
-    if (children.length < 2) return;
-    const target = children[1];
+    const targetIdx = initialIndex ?? 1;
+    const target = children[Math.min(targetIdx, children.length - 1)];
+    if (!target) return;
     const targetCenter = target.offsetLeft + target.offsetWidth / 2;
     el.scrollLeft = targetCenter - el.clientWidth / 2;
-  }, [hasQr]);
+  }, [hasQr, initialIndex]);
 
   return (
     <div className="cards-carousel">
@@ -253,7 +254,7 @@ function ManageCardSection({ card }: { card: CardInfo }) {
   );
 }
 
-export function Cards({ accountType = 'personal' }: { accountType?: AccountType } = {}) {
+export function Cards({ accountType = 'personal', initialSelectedIndex }: { accountType?: AccountType; initialSelectedIndex?: number } = {}) {
   const { t } = useLanguage();
   const { jointAccountAccepted, jointCardType, jointCardImg } = usePrototypeNames();
   const baseCards = accountType === 'business' ? businessCards : personalCards;
@@ -267,7 +268,7 @@ export function Cards({ accountType = 'personal' }: { accountType?: AccountType 
     accountLabel: 'Joint account',
   } : null;
   const cards = jointCard ? [...baseCards, jointCard] : baseCards;
-  const [selectedIndex, setSelectedIndex] = useState(1); // Start on first real card (after QR)
+  const [selectedIndex, setSelectedIndex] = useState(initialSelectedIndex ?? 1);
   useHapticOnChange(selectedIndex);
 
   const isQr = selectedIndex === 0;
@@ -276,7 +277,7 @@ export function Cards({ accountType = 'personal' }: { accountType?: AccountType 
   return (
     <div className="cards-page cards-page--mobile">
       <h1 className="np-text-title-screen" style={{ margin: '0 0 16px' }}>{isQr ? t('cards.payWithQr') : t('cards.title')}</h1>
-      <CardCarousel cards={cards} selectedIndex={selectedIndex} onSelect={setSelectedIndex} hasQr />
+      <CardCarousel cards={cards} selectedIndex={selectedIndex} onSelect={setSelectedIndex} hasQr initialIndex={initialSelectedIndex ?? 1} />
 
       {isQr ? (
         <QrPageContent />

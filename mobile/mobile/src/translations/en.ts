@@ -354,6 +354,8 @@ const en = {
   'currentAccount.editCurrentAccount': 'Edit current account',
   'currentAccount.editGroup': 'Edit group',
   'currentAccount.closeGroup': 'Close group',
+  'currentAccount.editJointAccount': 'Edit joint account',
+  'currentAccount.closeJointAccount': 'Close joint account',
   'currentAccount.editJar': 'Edit jar',
   'currentAccount.closeJar': 'Close jar',
   'currentAccount.investedInInterest': 'Invested in Interest',

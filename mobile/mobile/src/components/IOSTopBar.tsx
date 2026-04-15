@@ -108,7 +108,7 @@ export function IOSTopBar({
   const isTransactions = showBack && activeNavItem === 'Transactions';
   const isInsights = showBack && activeNavItem === 'Insights';
   const isAccount = showBack && activeNavItem === 'Account';
-  const isCurrencyOrAccount = showBack && subPageType && ['account', 'taxes-account', 'jar-account', 'currency'].includes(subPageType);
+  const isCurrencyOrAccount = showBack && subPageType && ['account', 'taxes-account', 'jar-account', 'joint-account', 'currency'].includes(subPageType);
   const isAccountDetails = showBack && subPageType === 'account-details';
   const isGetMore = showBack && subPageType === 'get-more';
   const isDrillDown = showBack && !isTransactions && !isInsights && !isAccount && !isCurrencyOrAccount && !isAccountDetails && !isCards && !isPayments && !isRecipients && !isGetMore;

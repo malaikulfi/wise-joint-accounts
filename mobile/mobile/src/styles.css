@@ -4451,10 +4451,13 @@ html[class*="dark"] .more-menu__dropdown {
 
 .add-money-success__illustration {
   margin-bottom: 8px;
+  transform: scale(1.5);
+  transform-origin: center center;
 }
 
 .add-money-success__title {
   margin: 0;
+  font-family: 'Wise Sans', sans-serif;
   font-size: 44px;
   font-weight: 800;
   line-height: 1;
@@ -4786,13 +4789,14 @@ html[class*="dark"] .more-menu__dropdown {
 
 /* Scheduled success */
 .send-success__scheduled-title {
-  font-size: 26px;
-  font-weight: 900;
+  font-family: 'Wise Sans', sans-serif;
+  font-size: 44px;
+  font-weight: 800;
   color: #9fe870;
   text-transform: uppercase;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.02em;
   margin: 0 0 16px;
-  line-height: 1.15;
+  line-height: 1;
   text-align: center;
 }
 .send-success__scheduled-desc {
@@ -4814,6 +4818,8 @@ html[class*="dark"] .more-menu__dropdown {
   text-align: center;
   margin: 0 0 20px;
   line-height: 1;
+  transform: scale(1.5);
+  transform-origin: center center;
 }
 
 /* Send success screen */
@@ -6933,7 +6939,7 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
 }
 
 .joint-accept__footer {
-  padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+  padding: 28px 16px max(16px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--color-border-subtle);
   background: var(--color-background-screen);
 }
@@ -8096,7 +8102,8 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
 }
 
 .card-success--dark .card-success__body {
-  text-align: left;
+  text-align: center;
+  align-items: center;
   margin-bottom: 16px;
 }
 
@@ -8104,6 +8111,11 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
   flex: 1;
   align-items: center;
   margin-bottom: 32px;
+  padding: 24px 0;
+}
+
+.card-success--dark .card-success__hero > * {
+  transform: scale(1.5);
 }
 
 .card-success__footer {
@@ -8598,23 +8610,18 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
 
 /* ===== Joint Account Pitch ===== */
 .joint-pitch {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
+  position: relative;
+  width: 100%;
+  height: 100%;
   background: var(--color-background-screen);
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 /* Constrain all content to mobile-like width on desktop */
 .joint-pitch__inner {
   width: 100%;
   max-width: 440px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+  margin: 0 auto;
 }
 
 /* Hero */
@@ -8842,17 +8849,14 @@ html.np-theme-business--dark .ios-top-bar__fade::before {
 
 .joint-pitch__avatar--globe { background: #1a6b6b; }
 
-/* Sticky footer — centered to match content column */
+/* Sticky footer — sticks to bottom of the pitch scroll container */
 .joint-pitch__footer {
-  position: fixed;
+  position: sticky;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
   width: 100%;
-  max-width: 440px;
   z-index: 10;
-  padding: 16px 24px 32px;
-  background: linear-gradient(to top, var(--color-background-screen) 70%, transparent);
+  padding: 28px 24px 32px;
+  background: var(--color-background-screen);
 }
 
 .joint-pitch__footer .wds-Button {

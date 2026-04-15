@@ -11,6 +11,7 @@ import type { AccountDetailField, QuickFactFee, AvailabilityItem } from '@shared
 type Props = {
   code: string;
   accountType?: AccountType;
+  isJoint?: boolean;
 };
 
 function DetailRow({ field, onCopy }: { field: AccountDetailField; onCopy: (value: string, snackbarKey: string) => void }) {
@@ -191,14 +192,15 @@ function ShareDropdown({ shareOpen, setShareOpen, shareRef, onCopyAll, onGetProo
   );
 }
 
-export function AccountDetailsPage({ code, accountType = 'personal' }: Props) {
+export function AccountDetailsPage({ code, accountType = 'personal', isJoint = false }: Props) {
   const { t } = useLanguage();
-  const { consumerName, businessName } = usePrototypeNames();
+  const { consumerName, businessName, jointPartnerName } = usePrototypeNames();
   const createSnackbar = useSnackbar();
   const [shareOpen, setShareOpen] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null!);
 
-  const activeName = accountType === 'business' ? businessName : consumerName;
+  const baseName = accountType === 'business' ? businessName : consumerName;
+  const activeName = isJoint && jointPartnerName ? `${baseName} and ${jointPartnerName}` : baseName;
   const details = getAccountDetails(code, accountType);
 
   useEffect(() => {

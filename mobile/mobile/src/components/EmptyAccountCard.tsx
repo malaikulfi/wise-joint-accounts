@@ -2,11 +2,11 @@ import { IconButton } from '@transferwise/components';
 import { Plus } from '@transferwise/icons';
 import { useLanguage } from '../context/Language';
 
-export function EmptyAccountCard() {
+export function EmptyAccountCard({ onClick }: { onClick?: () => void } = {}) {
   const { t } = useLanguage();
 
   return (
-    <article className="mca mca--empty">
+    <article className="mca mca--empty" onClick={onClick} style={onClick ? { cursor: 'pointer' } : undefined}>
       <div className="mca-cards__stack mca-cards__stack--empty">
         <div className="mca-cards__empty-card" />
       </div>

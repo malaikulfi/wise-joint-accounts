@@ -17,7 +17,7 @@ type Section = {
   items: SectionItem[];
 };
 
-export function GetMoreFromWise({ onClose, onOpenJointPitch, pendingInviteName, jointAccountAccepted }: { onClose: () => void; onOpenJointPitch: () => void; pendingInviteName?: string | null; jointAccountAccepted?: boolean }) {
+export function GetMoreFromWise({ onClose, onOpenJointPitch, onOpenJointPending, pendingInviteName, jointAccountAccepted }: { onClose: () => void; onOpenJointPitch: () => void; onOpenJointPending?: () => void; pendingInviteName?: string | null; jointAccountAccepted?: boolean }) {
   const { t } = useLanguage();
   const hasPendingInvite = !!pendingInviteName;
 
@@ -26,7 +26,7 @@ export function GetMoreFromWise({ onClose, onOpenJointPitch, pendingInviteName, 
       id: 'accounts',
       labelKey: 'getMore.section.accounts',
       items: [
-        { icon: <People size={24} />, iconBg: '#163300', iconColor: '#9fe870', titleKey: 'getMore.joint.title', subtitleKey: (hasPendingInvite || jointAccountAccepted) ? undefined : 'getMore.joint.subtitle', action: (hasPendingInvite || jointAccountAccepted) ? undefined : onOpenJointPitch },
+        { icon: <People size={24} />, iconBg: '#163300', iconColor: '#9fe870', titleKey: 'getMore.joint.title', subtitleKey: (hasPendingInvite || jointAccountAccepted) ? undefined : 'getMore.joint.subtitle', action: hasPendingInvite ? onOpenJointPending : jointAccountAccepted ? undefined : onOpenJointPitch },
         { icon: <CardWise size={24} />, iconBg: '#163300', iconColor: '#9fe870', titleKey: 'getMore.card617.title', subtitleKey: 'getMore.card617.subtitle' },
         { icon: <Suitcase size={24} />, iconBg: '#163300', iconColor: '#9fe870', titleKey: 'getMore.business.title', subtitleKey: 'getMore.business.subtitle' },
       ],
@@ -75,27 +75,27 @@ export function GetMoreFromWise({ onClose, onOpenJointPitch, pendingInviteName, 
           <ul className="wds-list list-unstyled m-y-0">
             {section.items.map((item, idx) => {
               const isJoint = item.titleKey === 'getMore.joint.title';
-              const isJointDisabled = isJoint && (hasPendingInvite || jointAccountAccepted);
+              const isJointDisabled = isJoint && !!jointAccountAccepted;
               const jointSubtitle = isJoint && jointAccountAccepted
                 ? 'You already have a joint account'
                 : isJoint && hasPendingInvite
                 ? 'Waiting for your invitation to be accepted'
                 : undefined;
               return (
-                <li key={idx} onClick={!isJointDisabled ? item.action : undefined} style={isJointDisabled ? { opacity: 0.5, pointerEvents: 'none' } : item.action ? { cursor: 'pointer' } : undefined}>
-                  <ListItem
-                    media={
-                      <ListItem.AvatarView size={48} style={{ background: 'transparent', border: 'none' }}>
-                        <div style={{ background: item.iconBg, color: item.iconColor, width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}>
-                          {item.icon}
-                        </div>
-                      </ListItem.AvatarView>
-                    }
-                    title={<span className="np-text-body-large" style={{ fontWeight: 600 }}>{t(item.titleKey as any)}</span>}
-                    subtitle={jointSubtitle ?? (item.subtitleKey ? t(item.subtitleKey as any) : undefined)}
-                    control={<ListItem.Navigation />}
-                  />
-                </li>
+                <ListItem
+                  key={idx}
+                  style={isJointDisabled ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
+                  media={
+                    <ListItem.AvatarView size={48} style={{ background: 'transparent', border: 'none' }}>
+                      <div style={{ background: item.iconBg, color: item.iconColor, width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}>
+                        {item.icon}
+                      </div>
+                    </ListItem.AvatarView>
+                  }
+                  title={<span className="np-text-body-large" style={{ fontWeight: 600 }}>{t(item.titleKey as any)}</span>}
+                  subtitle={jointSubtitle ?? (item.subtitleKey ? t(item.subtitleKey as any) : undefined)}
+                  control={<ListItem.Navigation onClick={!isJointDisabled ? item.action : undefined} />}
+                />
               );
             })}
           </ul>

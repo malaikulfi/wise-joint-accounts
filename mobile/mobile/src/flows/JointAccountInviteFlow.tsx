@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useCallback } from 'react';
 import { Button, ListItem, InputGroup, Input, Size } from '@transferwise/components';
 import { Search, CrossCircleFill, Link, QrCode, ArrowLeft, Cross } from '@transferwise/icons';
 import { Illustration } from '@wise/art';
@@ -58,7 +58,16 @@ export function JointAccountInviteFlow({ onClose, onDone, onInviteSent, onStepCh
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [selectedRecipientName, setSelectedRecipientName] = useState(recipientName ?? '');
   const [isAnimating, setIsAnimating] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const searchRef = useRef<HTMLInputElement>(null);
+
+  const handleCopyLink = useCallback(() => {
+    navigator.clipboard?.writeText(`https://${INVITE_URL}`);
+    setLinkCopied(true);
+    clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setLinkCopied(false), 2000);
+  }, []);
 
   const isSearching = searchQuery.trim().length > 0;
 
@@ -257,11 +266,24 @@ export function JointAccountInviteFlow({ onClose, onDone, onInviteSent, onStepCh
           </p>
           <div className="joint-invite-sheet__link-row">
             <span className="np-text-body-default joint-invite-sheet__link-url">{INVITE_URL}</span>
-            <Button v2 size="sm" priority="secondary" onClick={() => navigator.clipboard?.writeText(`https://${INVITE_URL}`)}>
-              Copy
+            <Button v2 size="sm" priority="secondary" onClick={handleCopyLink}>
+              {linkCopied ? 'Copied!' : 'Copy'}
             </Button>
           </div>
-          <Button v2 size="lg" priority="primary" block onClick={() => setSheet(null)} style={{ marginTop: 8 }}>
+          <div
+            aria-live="polite"
+            style={{
+              height: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: linkCopied ? 1 : 0,
+              transition: 'opacity 0.2s ease',
+            }}
+          >
+            <span className="np-text-body-default" style={{ color: '#9fe870' }}>Link copied to clipboard</span>
+          </div>
+          <Button v2 size="lg" priority="primary" block onClick={() => setSheet(null)} style={{ marginTop: 4 }}>
             Done
           </Button>
         </div>

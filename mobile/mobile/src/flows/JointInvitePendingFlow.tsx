@@ -62,7 +62,7 @@ export function JointInvitePendingFlow({ recipientName, onClose, onCancel }: Pro
             Are you sure you want to cancel this invite?
           </p>
           <Button v2 size="lg" priority="primary" sentiment="negative" block onClick={() => { setShowCancelSheet(false); onCancel?.(); }}>
-            Cancel
+            Yes, cancel invite
           </Button>
         </div>
       </BottomSheet>

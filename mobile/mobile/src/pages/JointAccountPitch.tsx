@@ -1,29 +1,10 @@
 import { Button } from '@transferwise/components';
-import { Cross, People, Receipt, Globe } from '@transferwise/icons';
+import { People, Receipt, Globe } from '@transferwise/icons';
 import { useLanguage } from '../context/Language';
-import { useLiquidGlass } from '../hooks/useLiquidGlass';
 import cardGreenImg from '../assets/card-green.jpg';
 import cardTapestryImg from '../assets/card-tapestry.jpg';
 
-function GlassCircle({ children, onClick, ariaLabel }: { children: React.ReactNode; onClick?: () => void; ariaLabel?: string }) {
-  const glass = useLiquidGlass<HTMLButtonElement>();
-  return (
-    <button
-      ref={glass.ref}
-      className="ios-glass-btn ios-glass-btn--circle"
-      onClick={onClick}
-      aria-label={ariaLabel}
-      onPointerDown={glass.onPointerDown}
-      onPointerMove={glass.onPointerMove}
-      onPointerUp={glass.onPointerUp}
-      onPointerCancel={glass.onPointerUp}
-    >
-      {children}
-    </button>
-  );
-}
-
-export function JointAccountPitch({ onClose, onGetStarted }: { onClose: () => void; onGetStarted: () => void }) {
+export function JointAccountPitch({ onClose: _onClose, onGetStarted }: { onClose?: () => void; onGetStarted: () => void }) {
   const { t } = useLanguage();
 
   return (
@@ -31,14 +12,6 @@ export function JointAccountPitch({ onClose, onGetStarted }: { onClose: () => vo
       <div className="joint-pitch__inner">
       {/* Hero */}
       <div className="joint-pitch__hero">
-        <div className="joint-pitch__close">
-          <GlassCircle onClick={onClose} ariaLabel="Close">
-            <span className="ios-glass-btn__icon">
-              <Cross size={24} />
-            </span>
-          </GlassCircle>
-        </div>
-
         <div className="joint-pitch__hero-copy">
           <h1 className="np-display np-text-display-medium joint-pitch__hero-title">
             A joint account for global life
@@ -116,8 +89,14 @@ export function JointAccountPitch({ onClose, onGetStarted }: { onClose: () => vo
 
       {/* Sticky footer */}
       <div className="joint-pitch__footer">
+        <p className="np-text-body-default" style={{ textAlign: 'center', color: 'var(--color-content-secondary)', margin: '0 0 20px' }}>
+          By continuing, you agree to the{' '}
+          <a href="#" className="np-text-link-default" onClick={(e) => e.preventDefault()} style={{ color: '#9fe870' }}>
+            joint account terms and conditions
+          </a>
+        </p>
         <Button v2 size="lg" priority="primary" block onClick={onGetStarted}>
-          Get started
+          Agree and continue
         </Button>
       </div>
     </div>

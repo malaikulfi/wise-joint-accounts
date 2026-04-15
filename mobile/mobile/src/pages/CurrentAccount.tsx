@@ -36,6 +36,7 @@ type Props = {
   txList?: Transaction[];
   onViewScheduled?: () => void;
   onViewDirectDebits?: () => void;
+  onCloseJointAccount?: () => void;
 };
 
 function CurrenciesSection({ onNavigateCurrency, activeCurrencies, isGroup }: { onNavigateCurrency?: (code: string) => void; activeCurrencies: typeof currencies; isGroup?: boolean }) {
@@ -276,7 +277,7 @@ function SidebarContent({ onNavigateCards, accountType = 'personal', jar, accoun
   );
 }
 
-export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountDetails, accountType = 'personal', jar, jarConfig, initialTab, onAdd, onConvert, onSend, onRequest, onPaymentLink, moreMenuOpen, onMoreMenuClose, balanceAdjustment = 0, txList, onViewScheduled, onViewDirectDebits }: Props) {
+export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountDetails, accountType = 'personal', jar, jarConfig, initialTab, onAdd, onConvert, onSend, onRequest, onPaymentLink, moreMenuOpen, onMoreMenuClose, balanceAdjustment = 0, txList, onViewScheduled, onViewDirectDebits, onCloseJointAccount }: Props) {
   const { consumerName, businessName } = usePrototypeNames();
   const { t } = useLanguage();
   const txLabels = useTxLabels();
@@ -298,7 +299,7 @@ export function CurrentAccount({ onNavigateCurrency, onNavigateCards, onAccountD
   const accountLabel = isJoint ? 'Joint account' : isJar ? t(jarConfig.nameKey) : isGroup ? t('home.taxes') : t('home.currentAccount');
 
   const menuItems = isJoint
-    ? [{ label: t('common.statementsAndReports'), icon: <Document size={24} /> }, { label: t('currentAccount.closeGroup'), icon: <CrossCircle size={24} /> }]
+    ? [{ label: t('currentAccount.editJointAccount'), icon: <Edit size={24} /> }, { label: t('common.statementsAndReports'), icon: <Document size={24} /> }, { label: t('currentAccount.closeJointAccount'), icon: <CrossCircle size={24} />, onClick: onCloseJointAccount }]
     : isJar
       ? [{ label: t('currentAccount.editJar'), icon: <Edit size={24} /> }, { label: t('common.statementsAndReports'), icon: <Document size={24} /> }, { label: t('currentAccount.closeJar'), icon: <CrossCircle size={24} /> }]
       : isGroup

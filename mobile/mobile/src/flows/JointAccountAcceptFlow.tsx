@@ -799,6 +799,12 @@ export function JointAccountAcceptFlow({ inviterName, inviterAvatarUrl, userAvat
       </div>
 
       <div className="joint-accept__footer joint-accept__footer--two">
+        <p className="np-text-body-default" style={{ textAlign: 'center', color: 'var(--color-content-secondary)', margin: '0 0 20px' }}>
+          By accepting this invite, you accept the{' '}
+          <a href="#" className="np-text-link-default" onClick={(e) => e.preventDefault()} style={{ color: '#9fe870' }}>
+            joint account terms and conditions
+          </a>
+        </p>
         <Button v2 size="lg" priority="primary" block onClick={() => handleScreenChange('card-type')}>
           Accept and continue
         </Button>
